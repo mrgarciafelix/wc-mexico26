@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d13">
+<title>WC Mexico 26 — Edge Finder</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="logo">⚽</span>
+    <div>
+      <h1>WC MEXICO <span class="accent">26</span></h1>
+      <div class="sub" id="sub-meta">EDGE FINDER · loading…</div>
+    </div>
+  </div>
+  <button id="btn-refresh" class="ghost" title="reload model">↻</button>
+</header>
+
+<main>
+  <!-- ============ BEST BETS ============ -->
+  <section id="tab-bets" class="tab active">
+    <div class="ctrl-card">
+      <div class="ctrl">
+        <label>Bankroll
+          <span class="money"><span>$</span><input id="in-bankroll" type="number" inputmode="decimal" min="0" step="10"></span>
+        </label>
+        <label>Risk
+          <select id="in-kelly">
+            <option value="0.1">Cautious (⅒ Kelly)</option>
+            <option value="0.25">Balanced (¼ Kelly)</option>
+            <option value="0.5">Aggressive (½ Kelly)</option>
+            <option value="1">Max (full Kelly)</option>
+          </select>
+        </label>
+      </div>
+      <p class="micro" id="odds-source"></p>
+    </div>
+
+    <div class="summary" id="bets-summary"></div>
+
+    <h2 class="sec">💡 Suggested singles <span class="sec-sub">ranked by edge</span></h2>
+    <div id="singles-list" class="stack"></div>
+    <button id="singles-more" class="more hidden"></button>
+
+    <h2 class="sec">🎟️ Best parlay <span class="sec-sub">independent legs · growth-optimal</span></h2>
+    <div id="parlays-list" class="stack"></div>
+
+    <details class="browse">
+      <summary>Browse &amp; edit all market odds</summary>
+      <p class="micro">Set your bookmaker's decimal odds for any selection — the plan above updates instantly. Stored on this device only.</p>
+      <div class="browse-tools">
+        <input id="browse-search" type="search" placeholder="filter teams / markets…">
+        <button id="browse-reset" class="ghost sm">reset to sample</button>
+      </div>
+      <div id="browse-list"></div>
+    </details>
+  </section>
+
+  <!-- ============ TITLE RACE ============ -->
+  <section id="tab-title" class="tab">
+    <div class="seg" id="title-metric">
+      <button data-m="champion" class="active">Champion</button>
+      <button data-m="final">Final</button>
+      <button data-m="sf">Semis</button>
+      <button data-m="qf">QF</button>
+      <button data-m="r16">R16</button>
+      <button data-m="r32">Advance</button>
+      <button data-m="group_win">Win group</button>
+    </div>
+    <div id="movers-strip"></div>
+    <div id="title-list" class="stack"></div>
+  </section>
+
+  <!-- ============ MATCHES ============ -->
+  <section id="tab-matches" class="tab">
+    <label class="check"><input type="checkbox" id="matches-upcoming" checked> upcoming only</label>
+    <div id="matches-list"></div>
+  </section>
+
+  <!-- ============ GROUPS ============ -->
+  <section id="tab-groups" class="tab">
+    <div id="groups-grid"></div>
+  </section>
+</main>
+
+<nav id="tabs">
+  <button data-tab="bets" class="active"><span>💰</span>Best Bets</button>
+  <button data-tab="title"><span>🏆</span>Title Race</button>
+  <button data-tab="matches"><span>📅</span>Matches</button>
+  <button data-tab="groups"><span>📊</span>Groups</button>
+</nav>
+
+<div id="disclaimer">
+  Model: Elo (49k internationals) + market value + form → calibrated Poisson → Monte Carlo.
+  Illustrative odds shown until you enter your bookmaker's prices. Research only — no model guarantees profit. Bet responsibly. 18+.
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

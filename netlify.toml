@@ -1,0 +1,10 @@
+# Static site — no build step. To host on Netlify:
+#   app.netlify.com → Add new site → Import an existing project → pick this repo.
+# Netlify serves the repo root as-is (relative asset paths, client-side optimizer).
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
