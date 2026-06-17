@@ -34,7 +34,7 @@ const dayName = iso => iso ? new Date(iso).toDateString().toUpperCase() : "TBD";
 const clockUTC = iso => iso ? new Date(iso).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "";
 
 /* ---------------- state ---------------- */
-let S = null, LIVE = false;
+let S = null, LIVE = false, ACTIVE = "today";
 let ODDS = {};                       // key -> decimal odds (sample ∪ user edits)
 let BANKROLL = 200, KELLY = 0.25;
 const LS = {
@@ -63,12 +63,12 @@ function initState() {
   KELLY = parseFloat(localStorage.getItem(LS.kelly)) || S.meta.kelly_fraction || 0.25;
   const saved = JSON.parse(localStorage.getItem(LS.odds) || "{}");
   ODDS = Object.assign({}, S.sample_odds, saved);
-  document.getElementById("in-bankroll").value = BANKROLL;
-  document.getElementById("in-kelly").value = KELLY;
-  const userN = Object.keys(saved).length;
-  document.getElementById("odds-source").textContent = userN
-    ? `Using your odds on ${userN} selection${userN>1?"s":""} · sample odds elsewhere — edit any below.`
-    : "Showing illustrative bookmaker odds. Enter your book's prices (below or on each bet) to find your real edges.";
+  applyControls();
+  initStateLabel();
+}
+function applyControls() {
+  for (const id of ["in-bankroll", "t-bankroll"]) { const el = document.getElementById(id); if (el) el.value = BANKROLL; }
+  for (const id of ["in-kelly", "t-kelly"]) { const el = document.getElementById(id); if (el) el.value = KELLY; }
 }
 const userOdds = () => JSON.parse(localStorage.getItem(LS.odds) || "{}");
 function setOdds(key, val) {
@@ -95,8 +95,12 @@ function optimize(cands, bankroll, mult, opt) {
   }));
   const value = pool.filter(c => c.edge > 1e-9).sort((a,b) => b.edge - a.edge);
 
-  // singles: fractional Kelly, total exposure capped
-  let singles = value.map(c => ({...c, stake: bankroll * mult * c.kelly}));
+  // singles: one bet per mutually-exclusive group (can't back two outcomes of
+  // a match, and only one team wins each outright) — keep best edge per group.
+  const mgroup = c => c.market.startsWith("match:") ? c.market : "outright:" + c.market;
+  const seenG = new Set(); const dedup = [];
+  for (const c of value) { const g = mgroup(c); if (seenG.has(g)) continue; seenG.add(g); dedup.push(c); }
+  let singles = dedup.map(c => ({...c, stake: bankroll * mult * c.kelly}));
   const total = singles.reduce((s,x) => s + x.stake, 0), capAmt = bankroll * opt.cap;
   const scale = (total > capAmt && total > 0) ? capAmt / total : 1;
   singles.forEach(s => { s.stake = Math.round(s.stake*scale*100)/100; s.exp_profit = Math.round(s.stake*s.edge*100)/100; });
@@ -167,14 +171,19 @@ function renderBets() {
   document.getElementById("parlays-list").innerHTML = plan.parlays.map((p,i) => parlayCard(p,i)).join("")
     || `<div class="empty">No positive-edge parlay from independent legs right now.</div>`;
 }
+function settleLabel(s) {
+  if (s.kind === "match" || s.market.startsWith("match:"))
+    return s.kickoff ? "settles " + new Date(s.kickoff).toLocaleDateString([], {month:"short", day:"numeric"}) : "settles match day";
+  return "long-term · settles Jul";
+}
 function betCard(s, top) {
   const team = s.teams && s.teams[0];
   const mk = {champion:"World Cup winner", final:"Reach final", sf:"Reach semis"}[s.market]
-    || (s.market.startsWith("match:") ? s.stage?.toUpperCase()+" · match" : s.market);
+    || (s.market.startsWith("match:") ? (s.stage?s.stage.toUpperCase():"")+" · match" : s.market);
   const w = Math.min(100, 100 * s.model_p), wi = Math.min(100, 100 * s.implied_p);
   return `<div class="bet ${top?"top":""}">
     <div class="bet-head"><span class="flag">${flag(team)}</span>
-      <div class="bet-title">${esc(s.label)}<span class="mk">${esc(mk)}</span></div>
+      <div class="bet-title">${esc(s.label)}<span class="mk">${esc(mk)} · ${settleLabel(s)}</span></div>
       <span class="edge-chip">+${(s.edge*100).toFixed(1)}%</span></div>
     <div class="bet-bar"><i class="model" style="width:${wi}%"></i><i class="gap" style="width:${Math.max(0,w-wi)}%"></i></div>
     <div class="bet-grid">
@@ -201,30 +210,103 @@ function parlayCard(p, i) {
     </div></div>`;
 }
 
+/* ================= TODAY tab ================= */
+function todaySlate() {
+  // the next slate to be played: earliest upcoming match date in the data
+  const up = S.matches.filter(m => m.home_score == null && m.home_team && m.away_team
+    && m.kickoff_utc && m.forecast);
+  if (!up.length) return null;
+  const day = up.map(m => m.kickoff_utc.slice(0,10)).sort()[0];
+  const matches = up.filter(m => m.kickoff_utc.slice(0,10) === day)
+    .sort((a,b) => a.kickoff_utc.localeCompare(b.kickoff_utc));
+  return {day, matches, isToday: day === new Date().toISOString().slice(0,10)};
+}
+function todayCandidates(slate) {
+  const nos = new Set(slate.matches.map(m => m.number));
+  return S.markets.filter(m => m.match_no != null && nos.has(m.match_no) && ODDS[m.key] > 1)
+    .map(m => ({...m, decimal_odds: ODDS[m.key]}));
+}
+function renderToday() {
+  const slate = todaySlate();
+  if (!slate) {
+    document.getElementById("today-matches").innerHTML = `<div class="empty">No upcoming matches in the data.</div>`;
+    document.getElementById("today-summary").innerHTML = "";
+    document.getElementById("today-acca").innerHTML = ""; return;
+  }
+  const plan = optimize(todayCandidates(slate), BANKROLL, KELLY);
+  const pickBy = {}; plan.singles.forEach(s => pickBy[s.match_no] = s);
+  const stake = plan.summary.singles_stake, expP = plan.summary.singles_exp_profit;
+  const bestCase = Math.round(plan.singles.reduce((a,x) => a + x.stake*(x.decimal_odds-1), 0)*100)/100;
+  document.getElementById("today-summary").innerHTML = [
+    ["Today's bets", plan.singles.length, "settle tonight", ""],
+    ["Stake", money(stake), `${(KELLY*100)|0}% Kelly`, ""],
+    ["Exp. profit", money(expP), "on average", "good"],
+    ["If all win", "+"+money(bestCase), `bankroll → ${money(BANKROLL+bestCase)}`, "good"],
+  ].map(([k,v,n,c]) => `<div class="stat"><div class="k">${k}</div>
+    <div class="v ${c}">${v}</div><div class="note">${n}</div></div>`).join("");
+  const d = new Date(slate.day + "T12:00:00");
+  document.getElementById("today-date").textContent = (slate.isToday ? "TODAY · " : "") + d.toDateString();
+  document.getElementById("today-matches").innerHTML =
+    slate.matches.map(m => todayMatchCard(m, pickBy[m.number])).join("");
+  document.getElementById("today-acca").innerHTML = plan.parlays.length ? parlayCard(plan.parlays[0], 0)
+    : `<div class="empty">No +EV multi-match parlay from today's card at these odds.</div>`;
+  document.getElementById("today-sub").textContent = slate.isToday
+    ? "Bets that settle tonight — win, update your bankroll, repeat tomorrow."
+    : "Next match day — these settle the same day, so you can iterate fast.";
+}
+function todayMatchCard(m, pick) {
+  const fc = m.forecast || {};
+  const cells = [["home","1"],["draw","X"],["away","2"]].map(([sel,sym]) => {
+    const key = `match:${m.number}|${sel}`, o = ODDS[key], p = fc[sel];
+    const e = o > 1 ? p*o - 1 : null, ec = e == null ? "flat" : e > 0 ? "up" : "down";
+    const isPick = pick && pick.selection === sel;
+    return `<div class="tm-out ${isPick?"pick":""}"><div class="s">${sym}</div>
+      <div class="mp">${pct(p)}</div>
+      <input class="odds-edit tm-odds" inputmode="decimal" data-key="${esc(key)}" value="${o ?? ""}">
+      <div class="e ${ec}">${e == null ? "—" : (e>0?"+":"")+(e*100).toFixed(0)+"%"}</div></div>`;
+  }).join("");
+  const pickLine = pick
+    ? `<div class="tm-pick"><b>✓ ${esc(pick.label)}</b> @ ${pick.decimal_odds} · edge +${(pick.edge*100).toFixed(1)}% → stake <b>${money(pick.stake)}</b></div>`
+    : `<div class="tm-pick none">No value at these odds — try your bookmaker's prices.</div>`;
+  return `<div class="tmatch">
+    <div class="tm-head"><span>M${m.number} · ${esc(m.stage)}${m.group_letter?" "+m.group_letter:""}</span>
+      <span>${clockUTC(m.kickoff_utc)}</span></div>
+    <div class="tm-teams">${esc(m.home_label)} ${flag(m.home_label)} <span class="vs">v</span> ${flag(m.away_label)} ${esc(m.away_label)}</div>
+    <div class="tm-grid">${cells}</div>
+    ${pickLine}</div>`;
+}
+
 /* odds editing (event-delegated, recompute on commit) */
+function recomputeActive() {
+  if (ACTIVE === "today") renderToday();
+  else if (ACTIVE === "bets") { renderBets(); if (browseOpen()) renderBrowse(); }
+}
 function commitOdds(el) {
   const v = parseFloat(el.value);
   setOdds(el.dataset.key, isFinite(v) ? v : 0);
-  initStateLabel(); renderBets(); if (browseOpen()) renderBrowse();
+  initStateLabel(); recomputeActive();
 }
 function initStateLabel() {
   const userN = Object.keys(userOdds()).length;
-  document.getElementById("odds-source").textContent = userN
+  const txt = userN
     ? `Using your odds on ${userN} selection${userN>1?"s":""} · sample odds elsewhere.`
-    : "Showing illustrative bookmaker odds. Enter your book's prices to find your real edges.";
+    : "Showing illustrative bookmaker odds — enter your book's prices to find your real edges.";
+  const a = document.getElementById("odds-source"); if (a) a.textContent = txt;
 }
 document.addEventListener("change", e => {
   if (e.target.classList.contains("odds-edit") || e.target.classList.contains("brow-odds")) commitOdds(e.target);
 });
 document.getElementById("singles-more").addEventListener("click", () => { showAllSingles = !showAllSingles; renderBets(); });
-document.getElementById("in-bankroll").addEventListener("change", e => {
-  BANKROLL = Math.max(0, parseFloat(e.target.value) || 0);
-  localStorage.setItem(LS.bank, BANKROLL); syncSettings(); renderBets();
-});
-document.getElementById("in-kelly").addEventListener("change", e => {
-  KELLY = parseFloat(e.target.value);
-  localStorage.setItem(LS.kelly, KELLY); syncSettings(); renderBets();
-});
+function setBankroll(v) {
+  BANKROLL = Math.max(0, parseFloat(v) || 0);
+  localStorage.setItem(LS.bank, BANKROLL); applyControls(); syncSettings(); recomputeActive();
+}
+function setKelly(v) {
+  KELLY = parseFloat(v) || 0.25;
+  localStorage.setItem(LS.kelly, KELLY); applyControls(); syncSettings(); recomputeActive();
+}
+["in-bankroll", "t-bankroll"].forEach(id => document.getElementById(id)?.addEventListener("change", e => setBankroll(e.target.value)));
+["in-kelly", "t-kelly"].forEach(id => document.getElementById(id)?.addEventListener("change", e => setKelly(e.target.value)));
 async function syncSettings() {
   if (!LIVE) return;
   try { await fetch("/api/settings", {method:"PUT", headers:{"Content-Type":"application/json"},
@@ -338,12 +420,13 @@ function renderGroups() {
 }
 
 /* ================= nav + boot ================= */
-const RENDER = {bets: renderBets, title: renderTitle, matches: renderMatches, groups: renderGroups};
-let rendered = {};
+const RENDER = {today: renderToday, bets: renderBets, title: renderTitle,
+                matches: renderMatches, groups: renderGroups};
 function show(tab) {
+  ACTIVE = tab;
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.id==="tab-"+tab));
-  RENDER[tab](); rendered[tab] = true;
+  RENDER[tab]();
   window.scrollTo({top:0, behavior:"instant"});
 }
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
@@ -354,7 +437,7 @@ document.getElementById("btn-refresh").addEventListener("click", async e => {
     if (LIVE) { try { await fetch("/api/refresh", {method:"POST"}); } catch {} }
     await loadSnapshot();
     ODDS = Object.assign({}, S.sample_odds, userOdds());
-    show("bets");
+    show(ACTIVE);
   } finally { b.textContent = "↻"; b.disabled = false; }
 });
 
@@ -369,7 +452,7 @@ function setMeta() {
   try {
     await loadSnapshot();
     initState(); setMeta();
-    show("bets");
+    show("today");
   } catch (err) {
     document.querySelector("main").innerHTML =
       `<div class="empty">Couldn't load model data.<br><span class="micro">${esc(err.message||err)}</span></div>`;

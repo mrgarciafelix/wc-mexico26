@@ -52,7 +52,7 @@ main { padding: 14px 14px 24px; max-width: 760px; margin: 0 auto; }
 /* ---------- bottom nav ---------- */
 nav#tabs {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: rgba(16,21,34,.97); backdrop-filter: blur(8px);
   border-top: 1px solid var(--border);
   padding-bottom: var(--safe-b);
@@ -131,6 +131,28 @@ nav#tabs button.active span { filter: none; }
 .leg .lo { font-family: var(--mono); color: var(--muted); font-weight: 700; }
 .parlay-foot { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 11px 14px;
   border-top: 1px solid var(--border); background: var(--panel2); }
+
+/* ---------- today match card ---------- */
+.tmatch { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.tm-head { display: flex; justify-content: space-between; color: var(--faint); font-family: var(--mono);
+  font-size: 10.5px; letter-spacing: .5px; text-transform: uppercase; }
+.tm-teams { font-weight: 700; font-size: 15px; margin: 7px 0 10px; }
+.tm-teams .vs { color: var(--faint); font-size: 11px; font-weight: 400; margin: 0 4px; }
+.tm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tm-out { background: var(--panel2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.tm-out.pick { border-color: var(--green); box-shadow: inset 0 0 0 1px rgba(46,230,168,.25); background: rgba(25,195,125,.07); }
+.tm-out .s { font-weight: 800; font-size: 13px; color: var(--muted); }
+.tm-out.pick .s { color: var(--green-bright); }
+.tm-out .mp { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.tm-out .tm-odds { width: 100%; height: 36px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); text-align: center; font-family: var(--mono); font-weight: 700;
+  font-size: 15px; outline: none; padding: 0; }
+.tm-out .tm-odds:focus { border-color: var(--green); }
+.tm-out .e { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+.tm-pick { margin-top: 10px; font-size: 13px; color: var(--green-bright); line-height: 1.4; }
+.tm-pick b { color: var(--text); }
+.tm-pick.none { color: var(--faint); font-size: 12px; }
 
 /* ---------- browse / edit odds ---------- */
 .browse { margin-top: 22px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 4px 14px 14px; }
@@ -228,7 +250,7 @@ nav#tabs button.active span { filter: none; }
   body { padding-bottom: 0; display: flex; flex-direction: column; min-height: 100vh; }
   header { order: 1; }
   nav#tabs { order: 2; position: sticky; top: 0; bottom: auto;
-    grid-template-columns: repeat(4, max-content); justify-content: center; gap: 6px;
+    grid-template-columns: repeat(5, max-content); justify-content: center; gap: 6px;
     padding: 6px; border-top: none; border-bottom: 1px solid var(--border); }
   nav#tabs button { flex-direction: row; gap: 7px; padding: 9px 18px; border-top: none;
     border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; }
