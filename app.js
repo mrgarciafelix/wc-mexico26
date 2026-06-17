@@ -42,13 +42,18 @@ const LS = {
 };
 
 async function loadSnapshot() {
-  // live server first (JSON content-type); else the static Netlify file.
-  try {
-    const r = await fetch("/api/snapshot", {cache:"no-store"});
-    if (r.ok && (r.headers.get("content-type") || "").includes("application/json")) {
-      S = await r.json(); LIVE = true; return;
-    }
-  } catch {}
+  // On localhost the FastAPI server is live (fresh data + write actions); on a
+  // static host (Netlify / GitHub Pages) read the exported snapshot file. The
+  // hostname check avoids a spurious /api 404 in the console when static.
+  const local = ["localhost", "127.0.0.1", ""].includes(location.hostname);
+  if (local) {
+    try {
+      const r = await fetch("/api/snapshot", {cache:"no-store"});
+      if (r.ok && (r.headers.get("content-type") || "").includes("application/json")) {
+        S = await r.json(); LIVE = true; return;
+      }
+    } catch {}
+  }
   const r = await fetch("./data/snapshot.json", {cache:"no-store"});
   S = await r.json(); LIVE = false;
 }
