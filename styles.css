@@ -169,6 +169,36 @@ nav#tabs button.active span { filter: none; }
 .prop .prop-odds:focus { border-color: var(--green); }
 .prop .pe { font-family: var(--mono); font-size: 12px; font-weight: 700; width: 46px; text-align: right; }
 
+/* ---------- same-game parlay ---------- */
+.sgp { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.sgp-head { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px;
+  background: linear-gradient(90deg, rgba(77,163,255,.08), transparent); }
+.sgp-head b { font-size: 14.5px; } .sgp-head span { color: var(--faint); font-family: var(--mono); font-size: 11px; }
+.sgp-legs { padding: 4px 14px; }
+.sgp-leg { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid #161d2b; opacity: .45; }
+.sgp-leg:first-child { border-top: none; }
+.sgp-leg.on { opacity: 1; }
+.sgp-tog { width: 26px; height: 26px; padding: 0; border-radius: 7px; font-weight: 800; flex: 0 0 auto;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--muted); }
+.sgp-leg.on .sgp-tog { background: rgba(25,195,125,.15); border-color: var(--green); color: var(--green-bright); }
+.sgp-name { flex: 1; font-size: 13px; font-weight: 600; min-width: 0; }
+.sgp-side { padding: 4px 9px; font-size: 11.5px; font-weight: 700; border-radius: 6px;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+.sgp-line { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-weight: 700; font-size: 12.5px; }
+.sgp-line button { width: 24px; height: 26px; padding: 0; border-radius: 6px; font-weight: 800; font-size: 15px;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+.sgp-mp { font-family: var(--mono); font-size: 12px; color: var(--muted); width: 44px; text-align: right; }
+.sgp-foot { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px 8px; padding: 12px 14px;
+  border-top: 1px solid var(--border); background: var(--panel2); }
+.sgp-foot.bad { display: block; color: var(--red); font-size: 12px; text-align: center; }
+.sgp-stat { display: flex; flex-direction: column; gap: 3px; }
+.sgp-stat .k { color: var(--muted); font-size: 9.5px; letter-spacing: .4px; text-transform: uppercase; }
+.sgp-stat b { font-family: var(--mono); font-size: 15px; font-weight: 800; }
+.sgp-stat b.stake { color: var(--gold); }
+.sgp-odds { width: 100%; height: 30px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); text-align: center; font-family: var(--mono); font-weight: 700; font-size: 14px; outline: none; padding: 0; }
+.sgp-odds:focus { border-color: var(--green); }
+
 /* ---------- browse / edit odds ---------- */
 .browse { margin-top: 22px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 4px 14px 14px; }
 .browse > summary { cursor: pointer; padding: 12px 0; font-weight: 700; font-size: 14px; color: var(--green-bright); }

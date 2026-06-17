@@ -54,20 +54,21 @@ const LS = {
   odds: "wc26_odds_v1", bank: "wc26_bankroll", kelly: "wc26_kelly",
 };
 
-async function loadSnapshot() {
+async function loadSnapshot(bust) {
   // On localhost the FastAPI server is live (fresh data + write actions); on a
   // static host (Netlify / GitHub Pages) read the exported snapshot file. The
   // hostname check avoids a spurious /api 404 in the console when static.
+  const q = bust ? ("?t=" + Date.now()) : "";   // beat CDN cache on manual refresh
   const local = ["localhost", "127.0.0.1", ""].includes(location.hostname);
   if (local) {
     try {
-      const r = await fetch("/api/snapshot", {cache:"no-store"});
+      const r = await fetch("/api/snapshot" + q, {cache:"no-store"});
       if (r.ok && (r.headers.get("content-type") || "").includes("application/json")) {
         S = await r.json(); LIVE = true; return;
       }
     } catch {}
   }
-  const r = await fetch("./data/snapshot.json", {cache:"no-store"});
+  const r = await fetch("./data/snapshot.json" + q, {cache:"no-store"});
   S = await r.json(); LIVE = false;
 }
 
@@ -267,6 +268,7 @@ function renderToday() {
   document.getElementById("today-date").textContent = (slate.isToday ? "TODAY · " : "") + slate.day.toUpperCase();
   document.getElementById("today-matches").innerHTML =
     slate.matches.map(m => todayMatchCard(m, pickBy[m.number])).join("");
+  renderSGP(slate);
   renderTodayProps(slate);
   document.getElementById("today-acca").innerHTML = plan.parlays.length ? parlayCard(plan.parlays[0], 0)
     : `<div class="empty">No +EV multi-match parlay from today's card at these odds.</div>`;
@@ -317,6 +319,142 @@ function renderTodayProps(slate) {
   document.getElementById("today-props").innerHTML = html ||
     `<div class="empty">No player props for today's matches.</div>`;
 }
+
+/* ===== same-game parlay engine (correlation-aware via the score matrix) ===== */
+const SGP = {};                               // matchNo -> builder state
+function scoreMatrix(lh, la, rho, N) {
+  N = N || 10;
+  const f = [1]; for (let i=1;i<=N;i++) f[i]=f[i-1]*i;
+  const ph=[], pa=[];
+  for (let g=0;g<=N;g++){ ph[g]=Math.exp(-lh)*Math.pow(lh,g)/f[g]; pa[g]=Math.exp(-la)*Math.pow(la,g)/f[g]; }
+  const m=[]; for (let i=0;i<=N;i++){ m[i]=[]; for (let j=0;j<=N;j++) m[i][j]=ph[i]*pa[j]; }
+  m[0][0]*=1-lh*la*rho; m[0][1]*=1+lh*rho; m[1][0]*=1+la*rho; m[1][1]*=1-rho;
+  let s=0; for (let i=0;i<=N;i++) for (let j=0;j<=N;j++) s+=m[i][j];
+  for (let i=0;i<=N;i++) for (let j=0;j<=N;j++) m[i][j]/=s;
+  return m;
+}
+function legPred(cat, side, line) {
+  if (cat==="winner") return side==="home"?(i,j)=>i>j : side==="away"?(i,j)=>i<j : (i,j)=>i===j;
+  if (cat==="total")  return side==="over"?(i,j)=>i+j>line : (i,j)=>i+j<line;
+  if (cat==="hometot")return side==="over"?(i,j)=>i>line   : (i,j)=>i<line;
+  if (cat==="awaytot")return side==="over"?(i,j)=>j>line   : (i,j)=>j<line;
+  return () => true;
+}
+function jointGoalProb(m, preds) {
+  let p=0; for (let i=0;i<m.length;i++) for (let j=0;j<m.length;j++)
+    if (preds.every(fn=>fn(i,j))) p+=m[i][j];
+  return p;
+}
+const legMarginal = (m,cat,side,line) => jointGoalProb(m,[legPred(cat,side,line)]);
+const cornerMean = (lh,la) => (2.6+1.7*lh)+(2.6+1.7*la);
+function poisCdf(k,lam){ let s=0,t=Math.exp(-lam); for(let i=0;i<=k;i++){ s+=t; t*=lam/(i+1); } return s; }
+const cornersProb = (side,line,lam) => side==="over" ? 1-poisCdf(Math.floor(line),lam) : poisCdf(Math.floor(line),lam);
+const GOAL_CATS = ["winner","total","hometot","awaytot"];
+
+function suggestSGP(m, fc) {
+  // Build a *positively-correlated* combo: legs that hit together (favourite
+  // dominance) — that's the coherent narrative and where SGP value lives.
+  const lh=fc.exp_goals_home, la=fc.exp_goals_away;
+  const mat=scoreMatrix(lh,la,S.meta.rho), cm=cornerMean(lh,la);
+  const st = {winner:{on:false,side:"home"}, total:{on:false,side:"over",line:2.5},
+    hometot:{on:false,side:"over",line:1.5}, awaytot:{on:false,side:"over",line:1.5},
+    corners:{on:false,side:"over",line:9.5}, odds:""};
+  // highest line the OVER still favours (keeps every leg same-direction)
+  const bestOver = (fn, lines) => { let b=null; for (const L of lines) if (L>=0.5 && fn(L)>=0.5) b=L; return b; };
+  const wmax=Math.max(fc.home,fc.draw,fc.away);
+  const favSide = fc.home===wmax?"home":fc.away===wmax?"away":"draw";
+  if (favSide!=="draw" && wmax>=0.45) {
+    st.winner={on:true, side:favSide};
+    const favCat = favSide==="home"?"hometot":"awaytot";
+    const fl = bestOver(L=>legMarginal(mat,favCat,"over",L), [0.5,1.5,2.5]);
+    if (fl!=null) st[favCat]={on:true, side:"over", line:fl};
+  }
+  const tl = bestOver(L=>legMarginal(mat,"total","over",L), [1.5,2.5,3.5,4.5]);
+  if (tl!=null) st.total={on:true, side:"over", line:tl};
+  const cl = bestOver(L=>cornersProb("over",L,cm),
+    [Math.floor(cm)-2.5, Math.floor(cm)-1.5, Math.floor(cm)-0.5, Math.floor(cm)+0.5]);
+  if (cl!=null) st.corners={on:true, side:"over", line:cl};
+  if (!st.winner.on && !st.total.on)       // very low-scoring, no fav: lean under
+    st.total = {on:true, side:"under", line:Math.max(1.5, Math.floor(lh+la)+0.5)};
+  return st;
+}
+function computeSGP(m) {
+  const fc=m.forecast, lh=fc.exp_goals_home, la=fc.exp_goals_away;
+  const mat=scoreMatrix(lh,la,S.meta.rho), st=SGP[m.number], cm=cornerMean(lh,la);
+  const preds=[]; let indep=1, n=0;
+  GOAL_CATS.forEach(c => { if (st[c].on){ preds.push(legPred(c,st[c].side,st[c].line));
+    indep*=legMarginal(mat,c,st[c].side,st[c].line); n++; } });
+  let P = preds.length?jointGoalProb(mat,preds):1;
+  if (st.corners.on){ const cp=cornersProb(st.corners.side,st.corners.line,cm); P*=cp; indep*=cp; n++; }
+  return {P, indep, n, mat, cm};
+}
+function sgpLegName(m, cat, st) {
+  const c=st[cat];
+  if (cat==="winner") return c.side==="draw" ? "Draw" : `${code(c.side==="home"?m.home_label:m.away_label)} win`;
+  if (cat==="total")  return `${c.side==="over"?"Over":"Under"} ${c.line} goals`;
+  if (cat==="hometot")return `${code(m.home_label)} ${c.side==="over"?"o":"u"}${c.line}`;
+  if (cat==="awaytot")return `${code(m.away_label)} ${c.side==="over"?"o":"u"}${c.line}`;
+  return `${c.side==="over"?"Over":"Under"} ${c.line} corners`;
+}
+function sgpCard(m) {
+  if (!SGP[m.number]) SGP[m.number]=suggestSGP(m, m.forecast);
+  const st=SGP[m.number], mat=scoreMatrix(m.forecast.exp_goals_home, m.forecast.exp_goals_away, S.meta.rho);
+  const cm=cornerMean(m.forecast.exp_goals_home, m.forecast.exp_goals_away);
+  const cats=[...GOAL_CATS,"corners"];
+  const legRows = cats.map(cat => {
+    const c=st[cat];
+    const mp = cat==="corners" ? cornersProb(c.side,c.line,cm) : legMarginal(mat,cat,c.side,c.line);
+    const stepper = cat==="winner" ? "" :
+      `<span class="sgp-line"><button data-sgp="step" data-mno="${m.number}" data-leg="${cat}" data-dir="-1">–</button>
+       ${c.line}<button data-sgp="step" data-mno="${m.number}" data-leg="${cat}" data-dir="1">+</button></span>`;
+    const sideTxt = cat==="winner" ? (c.side==="home"?"1":c.side==="draw"?"X":"2") : (c.side==="over"?"Over":"Under");
+    return `<div class="sgp-leg ${c.on?"on":""}">
+      <button class="sgp-tog" data-sgp="tog" data-mno="${m.number}" data-leg="${cat}">${c.on?"✓":"+"}</button>
+      <span class="sgp-name">${esc(sgpLegName(m,cat,st))}</span>
+      <button class="sgp-side" data-sgp="side" data-mno="${m.number}" data-leg="${cat}">${sideTxt}</button>
+      ${stepper}<span class="sgp-mp">${pct(mp)}</span></div>`;
+  }).join("");
+  const {P, indep, n} = computeSGP(m);
+  const lift = (n>=2 && indep>0) ? (P/indep - 1) : null;
+  const o = parseFloat(st.odds), hasO = o>1;
+  const e = hasO ? P*o - 1 : null;
+  const stake = hasO ? Math.round(Math.min(BANKROLL*KELLY*kellyF(P,o), BANKROLL*0.05)*100)/100 : 0;
+  const foot = P<=0 ? `<div class="sgp-foot bad">impossible combo</div>` :
+    `<div class="sgp-foot">
+      <div class="sgp-stat"><span class="k">True prob</span><b>${pct(P)}</b></div>
+      <div class="sgp-stat"><span class="k">Fair odds</span><b>${fair(P)}</b></div>
+      <div class="sgp-stat"><span class="k">Corr. lift</span><b class="${lift>0?"up":lift<0?"down":""}">${lift==null?"—":(lift>0?"+":"")+(lift*100).toFixed(0)+"%"}</b></div>
+      <div class="sgp-stat odds"><span class="k">Your SGP odds</span>
+        <input class="sgp-odds" inputmode="decimal" data-mno="${m.number}" value="${esc(st.odds)}" placeholder="${fair(P)}"></div>
+      <div class="sgp-stat"><span class="k">Edge</span><b class="${e>0?"up":e<0?"down":""}">${e==null?"—":(e>0?"+":"")+(e*100).toFixed(0)+"%"}</b></div>
+      <div class="sgp-stat"><span class="k">Stake</span><b class="stake">${stake>0?money(stake):"—"}</b></div>
+    </div>`;
+  return `<div class="sgp">
+    <div class="sgp-head"><b>${esc(code(m.home_label))} v ${esc(code(m.away_label))}</b>
+      <span>M${m.number} · ${clockUTC(m.kickoff_utc)}</span></div>
+    <div class="sgp-legs">${legRows}</div>${foot}</div>`;
+}
+function renderSGP(slate) {
+  document.getElementById("today-sgp").innerHTML =
+    slate.matches.map(m => sgpCard(m)).join("") ||
+    `<div class="empty">No matches to build.</div>`;
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-sgp]"); if (!t) return;
+  const mno=+t.dataset.mno, st=SGP[mno]; if (!st) return;
+  const act=t.dataset.sgp, leg=t.dataset.leg;
+  if (act==="tog") st[leg].on=!st[leg].on;
+  else if (act==="side") {
+    if (leg==="winner"){ const o=["home","draw","away"]; st.winner.side=o[(o.indexOf(st.winner.side)+1)%3]; }
+    else st[leg].side = st[leg].side==="over"?"under":"over";
+  } else if (act==="step") st[leg].line = Math.max(0.5, st[leg].line + (+t.dataset.dir));
+  renderSGP(todaySlate());
+});
+document.addEventListener("change", e => {
+  if (e.target.classList.contains("sgp-odds")) {
+    const mno=+e.target.dataset.mno; if (SGP[mno]){ SGP[mno].odds=e.target.value; renderSGP(todaySlate()); }
+  }
+});
 
 /* odds editing (event-delegated, recompute on commit) */
 function recomputeActive() {
@@ -481,12 +619,17 @@ document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click
 
 document.getElementById("btn-refresh").addEventListener("click", async e => {
   const b = e.currentTarget; b.textContent = "…"; b.disabled = true;
+  const before = S && S.meta && S.meta.generated;
   try {
     if (LIVE) { try { await fetch("/api/refresh", {method:"POST"}); } catch {} }
-    await loadSnapshot();
+    await loadSnapshot(true);                        // bypass cache
     ODDS = Object.assign({}, S.sample_odds, userOdds());
-    show(ACTIVE);
-  } finally { b.textContent = "↻"; b.disabled = false; }
+    setMeta(); show(ACTIVE);
+    const fresh = LIVE || (S.meta && S.meta.generated !== before);
+    b.textContent = fresh ? "✓" : "✓";
+    b.title = fresh ? "Updated to the latest data" : "Already showing the latest published data";
+  } catch { b.textContent = "!"; b.title = "Couldn't reach the data source"; }
+  setTimeout(() => { b.textContent = "↻"; b.disabled = false; }, 1400);
 });
 
 function setMeta() {
