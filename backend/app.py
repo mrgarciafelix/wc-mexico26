@@ -19,6 +19,7 @@ from . import db as dbm
 from . import updater
 from .betting import evaluate
 from .config import (FRONTEND, HOST_CITY_COUNTRY, WC_HOST_ELO_BONUS)
+from . import odds_api
 from . import props as propmod
 from .match_model import MAX_GOALS, outcome_probs, params
 from .optimizer import optimize
@@ -33,7 +34,13 @@ def do_update(trigger: str, sync_wiki: bool = True) -> dict:
     with _update_lock:
         con = dbm.connect()
         try:
-            return updater.run_update(con, trigger=trigger, sync_wiki=sync_wiki)
+            res = updater.run_update(con, trigger=trigger, sync_wiki=sync_wiki)
+            try:
+                odds_api.sync(con)          # refresh live odds (cached/rate-limited)
+            except Exception as e:
+                dbm.add_event(con, "warning", None, f"odds sync failed: {e}")
+                con.commit()
+            return res
         finally:
             con.close()
 
@@ -215,6 +222,10 @@ def build_snapshot() -> dict:
     try:
         markets: list[dict] = []
         sample: dict[str, float] = {}
+        # real odds (live API feed + any manual entries) keyed market|selection
+        db_odds = {f"{o['market']}|{o['selection']}": o["decimal_odds"]
+                   for o in con.execute("SELECT * FROM odds GROUP BY market, "
+                                        "selection HAVING id = MAX(id)")}
         # --- outright winner / final / SF -----------------------------------
         for mk in OUTRIGHTS:
             ranked = sorted(ov["teams"], key=lambda t: -t["probs"][mk])
@@ -294,10 +305,16 @@ def build_snapshot() -> dict:
                         add_prop(mno, gk["id"], team, teams, m.get("kickoff_utc"),
                                  m["stage"], match_txt, gk["name"], sel, p)
 
-        # real odds entered in the live app override the illustrative ones
-        for o in con.execute("SELECT * FROM odds GROUP BY market, selection "
-                             "HAVING id = MAX(id)"):
-            sample[f"{o['market']}|{o['selection']}"] = o["decimal_odds"]
+        # real odds override the illustrative ones; tag those markets "live"
+        for mk in markets:
+            mk["live"] = mk["key"] in db_odds
+        for k, v in db_odds.items():
+            sample[k] = v
+        live_n = sum(1 for mk in markets if mk["live"])
+        live_file = odds_api._load_file() or {}
+        odds_source = {"live": live_n > 0, "live_markets": live_n,
+                       "books": live_file.get("books", 0),
+                       "fetched_at": live_file.get("fetched_at")}
 
         # plan candidates straight from the catalog (same as the frontend)
         by_key = {mk["key"]: mk for mk in markets}
@@ -325,7 +342,8 @@ def build_snapshot() -> dict:
                  "matches_played": ov["matches_played"],
                  "matches_total": ov["matches_total"],
                  "bankroll": bankroll, "kelly_fraction": kf,
-                 "rho": params().get("rho", 0.0), "max_goals": MAX_GOALS},
+                 "rho": params().get("rho", 0.0), "max_goals": MAX_GOALS,
+                 "odds_source": odds_source},
         "teams": ov["teams"], "groups": gr, "matches": ms,
         "events": ov["events"], "movers": mv,
         "markets": markets, "sample_odds": sample, "plan": plan,

@@ -54,7 +54,7 @@ def growth_rate(p: float, o: float, f: float) -> float:
 def optimize(candidates: list[dict], bankroll: float, kelly_mult: float = 0.25,
              *, max_legs: int = 4, min_parlay_p: float = 0.04,
              parlay_pool: int = 12, exposure_cap: float = 0.5,
-             max_parlays: int = 3) -> dict:
+             max_parlays: int = 3, max_edge: float = 0.20) -> dict:
     """Build a staking plan.
 
     Each candidate: {market, selection, model_p, decimal_odds, teams(set|list),
@@ -82,7 +82,9 @@ def optimize(candidates: list[dict], bankroll: float, kelly_mult: float = 0.25,
             "fair_odds": (1.0 / p) if p > 0 else None,
         })
 
-    value = sorted([c for c in pool if c["edge"] > 1e-9],
+    # Cap the edge: a model "edge" far above the market is almost always model
+    # error, not value — so we don't recommend implausible spots.
+    value = sorted([c for c in pool if 1e-9 < c["edge"] <= max_edge],
                    key=lambda c: -c["edge"])
 
     # --- singles: one bet per mutually-exclusive group, Kelly-sized ----------

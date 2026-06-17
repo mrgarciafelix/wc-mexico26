@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 from backend import db as dbm
+from backend import odds_api
 from backend import updater
 from scripts.export_static import OUT, main as export_snapshot
 
@@ -28,6 +29,7 @@ def main() -> None:
         ).fetchone()["c"]
         print(f"update: run {res.get('run_id')} · {len(changes)} changes · "
               f"{res.get('n_sims')} sims · {new_played} played")
+        odds_api.sync(con)                      # live bookmaker odds (cached/rate-limited)
     except Exception as e:
         print(f"update warning: {e} (keeping last good state)")
     finally:

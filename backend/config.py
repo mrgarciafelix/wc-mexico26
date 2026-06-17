@@ -1,7 +1,18 @@
 """Central configuration: paths, model constants, name normalization."""
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# Load .env (gitignored) into the environment so local runs pick up secrets
+# like WC_ODDS_API_KEY. In CI the same vars come from repo secrets instead.
+_envf = ROOT / ".env"
+if _envf.exists():
+    for _line in _envf.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
 DATA = ROOT / "data"
 SEED = DATA / "seed"
 CACHE = DATA / "cache"

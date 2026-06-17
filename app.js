@@ -107,7 +107,9 @@ function optimize(cands, bankroll, mult, opt) {
     edge: edge(c.model_p, c.decimal_odds), kelly: kellyF(c.model_p, c.decimal_odds),
     implied_p: 1 / c.decimal_odds,
   }));
-  const value = pool.filter(c => c.edge > 1e-9).sort((a,b) => b.edge - a.edge);
+  // cap the edge — a model "edge" far above the market is model error, not value
+  const MAX_EDGE = 0.20;
+  const value = pool.filter(c => c.edge > 1e-9 && c.edge <= MAX_EDGE).sort((a,b) => b.edge - a.edge);
 
   // singles: one bet per mutually-exclusive group (can't back two outcomes of
   // a match, and only one team wins each outright) — keep best edge per group.
@@ -196,7 +198,7 @@ function renderUpsets() {
   candidates()
     .filter(c => (c.kind==="match"||c.kind==="outright") && c.decimal_odds>=2.8)
     .map(c => ({...c, edge: edge(c.model_p,c.decimal_odds), kelly: kellyF(c.model_p,c.decimal_odds), implied_p: 1/c.decimal_odds}))
-    .filter(c => c.edge > 1e-9).sort((a,b) => b.edge - a.edge)
+    .filter(c => c.edge > 1e-9 && c.edge <= 0.20).sort((a,b) => b.edge - a.edge)
     .forEach(c => { const g=c.mutex||c.market; if (!seen.has(g)){ seen.add(g); picks.push(c); } });
   picks.forEach(c => c.stake = BANKROLL*KELLY*c.kelly);
   const raw = picks.reduce((a,c)=>a+c.stake,0), cap = BANKROLL*0.5, sc = (raw>cap&&raw>0)?cap/raw:1;
@@ -520,11 +522,18 @@ function commitOdds(el) {
   initStateLabel(); recomputeActive();
 }
 function initStateLabel() {
-  const userN = Object.keys(userOdds()).length;
-  const txt = userN
-    ? `Using your odds on ${userN} selection${userN>1?"s":""} · sample odds elsewhere.`
-    : "Showing illustrative bookmaker odds — enter your book's prices to find your real edges.";
-  const a = document.getElementById("odds-source"); if (a) a.textContent = txt;
+  const a = document.getElementById("odds-source"); if (!a) return;
+  const os = (S.meta && S.meta.odds_source) || {};
+  if (os.live) {
+    a.textContent = `Live market odds — median of ${os.books} books (match 1X2 + champion). `
+      + `Your book Draftea isn't covered, so use these as the fair-price reference and compare on your app. `
+      + `Props / corners / final / SF still use model estimates.`;
+  } else {
+    const userN = Object.keys(userOdds()).length;
+    a.textContent = userN
+      ? `Using your odds on ${userN} selection${userN>1?"s":""} · sample odds elsewhere.`
+      : "Showing illustrative bookmaker odds — enter your book's prices to find your real edges.";
+  }
 }
 document.addEventListener("change", e => {
   if (e.target.classList.contains("odds-edit") || e.target.classList.contains("brow-odds")) commitOdds(e.target);
