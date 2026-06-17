@@ -119,8 +119,9 @@ function optimize(cands, bankroll, mult, opt) {
   const scale = (total > capAmt && total > 0) ? capAmt / total : 1;
   singles.forEach(s => { s.stake = Math.round(s.stake*scale*100)/100; s.exp_profit = Math.round(s.stake*s.edge*100)/100; });
 
-  // parlays: growth-optimal independent leg combinations
-  const legs = value.slice(0, opt.pool), scored = [];
+  // parlays: built from the SAME one-per-market value picks as the singles, so
+  // a match's recommended side never differs between the singles and the parlay.
+  const legs = dedup.slice(0, opt.pool), scored = [];
   for (let r = 2; r <= opt.maxLegs; r++) {
     for (const combo of combos(legs, r)) {
       const tset = new Set(); let ok = true;
@@ -392,30 +393,40 @@ const cornersProb = (side,line,lam) => side==="over" ? 1-poisCdf(Math.floor(line
 const GOAL_CATS = ["winner","total","hometot","awaytot"];
 
 function suggestSGP(m, fc) {
-  // Build a *positively-correlated* combo: legs that hit together (favourite
-  // dominance) — that's the coherent narrative and where SGP value lives.
+  // Anchor the winner on the SAME side the Today card / value board bets — the
+  // +EV 1X2 outcome with the best edge vs your odds (model favourite only as a
+  // fallback when no odds make a side +EV) — then build a positively-correlated
+  // narrative around it. Keeps the recommended team consistent everywhere.
   const lh=fc.exp_goals_home, la=fc.exp_goals_away;
   const mat=scoreMatrix(lh,la,S.meta.rho), cm=cornerMean(lh,la);
   const st = {winner:{on:false,side:"home"}, total:{on:false,side:"over",line:2.5},
     hometot:{on:false,side:"over",line:1.5}, awaytot:{on:false,side:"over",line:1.5},
     corners:{on:false,side:"over",line:9.5}, odds:""};
-  // highest line the OVER still favours (keeps every leg same-direction)
   const bestOver = (fn, lines) => { let b=null; for (const L of lines) if (L>=0.5 && fn(L)>=0.5) b=L; return b; };
-  const wmax=Math.max(fc.home,fc.draw,fc.away);
-  const favSide = fc.home===wmax?"home":fc.away===wmax?"away":"draw";
-  if (favSide!=="draw" && wmax>=0.45) {
-    st.winner={on:true, side:favSide};
-    const favCat = favSide==="home"?"hometot":"awaytot";
-    const fl = bestOver(L=>legMarginal(mat,favCat,"over",L), [0.5,1.5,2.5]);
-    if (fl!=null) st[favCat]={on:true, side:"over", line:fl};
+  const sideEdge = s => { const o=ODDS[`match:${m.number}|${s}`]; return o>1 ? fc[s]*o-1 : null; };
+  const valued = ["home","draw","away"].map(s => ({s, e: sideEdge(s)}))
+    .filter(x => x.e != null && x.e > 1e-9).sort((a,b) => b.e - a.e);
+  let win = valued.length ? valued[0].s : null;          // best value side
+  if (!win) {                                            // no odds → model favourite
+    const wmax=Math.max(fc.home,fc.draw,fc.away);
+    if (wmax>=0.45) win = fc.home===wmax?"home":fc.away===wmax?"away":"draw";
   }
-  const tl = bestOver(L=>legMarginal(mat,"total","over",L), [1.5,2.5,3.5,4.5]);
-  if (tl!=null) st.total={on:true, side:"over", line:tl};
-  const cl = bestOver(L=>cornersProb("over",L,cm),
-    [Math.floor(cm)-2.5, Math.floor(cm)-1.5, Math.floor(cm)-0.5, Math.floor(cm)+0.5]);
-  if (cl!=null) st.corners={on:true, side:"over", line:cl};
-  if (!st.winner.on && !st.total.on)       // very low-scoring, no fav: lean under
+  if (win) st.winner = {on:true, side:win};
+
+  if (win==="home" || win==="away") {          // winner-dominance, positively correlated
+    const favCat = win==="home"?"hometot":"awaytot";
+    const fl = bestOver(L=>legMarginal(mat,favCat,"over",L), [0.5,1.5,2.5]);
+    if (fl!=null) st[favCat] = {on:true, side:"over", line:fl};
+    const tl = bestOver(L=>legMarginal(mat,"total","over",L), [1.5,2.5,3.5,4.5]);
+    if (tl!=null) st.total = {on:true, side:"over", line:tl};
+    const cl = bestOver(L=>cornersProb("over",L,cm),
+      [Math.floor(cm)-2.5, Math.floor(cm)-1.5, Math.floor(cm)-0.5, Math.floor(cm)+0.5]);
+    if (cl!=null) st.corners = {on:true, side:"over", line:cl};
+  } else {                                     // draw / no clear winner → low-scoring lean
     st.total = {on:true, side:"under", line:Math.max(1.5, Math.floor(lh+la)+0.5)};
+    const cl = Math.max(0.5, Math.floor(cm)+0.5);
+    st.corners = {on:true, side: cornersProb("under",cl,cm)>=0.5?"under":"over", line:cl};
+  }
   return st;
 }
 function computeSGP(m) {
@@ -437,7 +448,8 @@ function sgpLegName(m, cat, st) {
   return `${c.side==="over"?"Over":"Under"} ${c.line} corners`;
 }
 function sgpCard(m) {
-  if (!SGP[m.number]) SGP[m.number]=suggestSGP(m, m.forecast);
+  // refresh the suggestion as odds change, until the user hand-tweaks this card
+  if (!SGP[m.number] || !SGP[m.number]._touched) SGP[m.number]=suggestSGP(m, m.forecast);
   const st=SGP[m.number], mat=scoreMatrix(m.forecast.exp_goals_home, m.forecast.exp_goals_away, S.meta.rho);
   const cm=cornerMean(m.forecast.exp_goals_home, m.forecast.exp_goals_away);
   const cats=[...GOAL_CATS,"corners"];
@@ -482,6 +494,7 @@ function renderSGP(slate) {
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-sgp]"); if (!t) return;
   const mno=+t.dataset.mno, st=SGP[mno]; if (!st) return;
+  st._touched = true;
   const act=t.dataset.sgp, leg=t.dataset.leg;
   if (act==="tog") st[leg].on=!st[leg].on;
   else if (act==="side") {
@@ -492,7 +505,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   if (e.target.classList.contains("sgp-odds")) {
-    const mno=+e.target.dataset.mno; if (SGP[mno]){ SGP[mno].odds=e.target.value; renderSGP(todaySlate()); }
+    const mno=+e.target.dataset.mno; if (SGP[mno]){ SGP[mno]._touched=true; SGP[mno].odds=e.target.value; renderSGP(todaySlate()); }
   }
 });
 

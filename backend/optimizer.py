@@ -95,14 +95,14 @@ def optimize(candidates: list[dict], bankroll: float, kelly_mult: float = 0.25,
         m = c["market"]
         return m if m.startswith("match:") else f"outright:{m}"
 
-    seen, singles = set(), []
+    seen, dedup = set(), []
     for c in value:
         g = mutex_group(c)
         if g in seen:
             continue
         seen.add(g)
-        stake = bankroll * kelly_mult * c["kelly_full"]
-        singles.append({**c, "stake": stake})
+        dedup.append(c)
+    singles = [{**c, "stake": bankroll * kelly_mult * c["kelly_full"]} for c in dedup]
     total = sum(s["stake"] for s in singles)
     cap = bankroll * exposure_cap
     scale = cap / total if total > cap and total > 0 else 1.0
@@ -110,8 +110,8 @@ def optimize(candidates: list[dict], bankroll: float, kelly_mult: float = 0.25,
         s["stake"] = round(s["stake"] * scale, 2)
         s["exp_profit"] = round(s["stake"] * s["edge"], 2)
 
-    # --- parlays: growth-optimal independent combinations --------------------
-    legs = value[:parlay_pool]
+    # --- parlays: from the same one-per-market value picks as the singles -----
+    legs = dedup[:parlay_pool]
     scored = []
     for r in range(2, max_legs + 1):
         for combo in combinations(legs, r):
