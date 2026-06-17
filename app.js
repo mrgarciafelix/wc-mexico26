@@ -186,6 +186,46 @@ function renderBets() {
 
   document.getElementById("parlays-list").innerHTML = plan.parlays.map((p,i) => parlayCard(p,i)).join("")
     || `<div class="empty">No positive-edge parlay from independent legs right now.</div>`;
+  renderUpsets();
+}
+/* +EV underdogs / draws: a high-variance portfolio where the rare winners pay
+   for the many losers — works ONLY because each leg is +EV (model > market). */
+function renderUpsets() {
+  const picks = []; const seen = new Set();
+  candidates()
+    .filter(c => (c.kind==="match"||c.kind==="outright") && c.decimal_odds>=2.8)
+    .map(c => ({...c, edge: edge(c.model_p,c.decimal_odds), kelly: kellyF(c.model_p,c.decimal_odds), implied_p: 1/c.decimal_odds}))
+    .filter(c => c.edge > 1e-9).sort((a,b) => b.edge - a.edge)
+    .forEach(c => { const g=c.mutex||c.market; if (!seen.has(g)){ seen.add(g); picks.push(c); } });
+  picks.forEach(c => c.stake = BANKROLL*KELLY*c.kelly);
+  const raw = picks.reduce((a,c)=>a+c.stake,0), cap = BANKROLL*0.5, sc = (raw>cap&&raw>0)?cap/raw:1;
+  picks.forEach(c => c.stake = Math.round(c.stake*sc*100)/100);
+  const stake = Math.round(picks.reduce((a,c)=>a+c.stake,0)*100)/100;
+  const expWin = picks.reduce((a,c)=>a+c.model_p,0);
+  const expProfit = Math.round(picks.reduce((a,c)=>a+c.stake*c.edge,0)*100)/100;
+  const pOne = 1 - picks.reduce((a,c)=>a*(1-c.model_p),1);
+  document.getElementById("upsets-summary").innerHTML = picks.length ? [
+    ["Upset plays", picks.length, "odds ≥ 2.8", ""],
+    ["Stake", money(stake), `${(KELLY*100)|0}% Kelly`, ""],
+    ["Exp. winners", expWin.toFixed(1), `of ${picks.length} · ${(pOne*100).toFixed(0)}% ≥1 lands`, ""],
+    ["Exp. profit", money(expProfit), stake?`+${(expProfit/stake*100).toFixed(0)}% ROI`:"", expProfit>0?"good":""],
+  ].map(([k,v,n,c]) => `<div class="stat"><div class="k">${k}</div>
+    <div class="v ${c}">${v}</div><div class="note">${n}</div></div>`).join("") : "";
+  document.getElementById("upsets-list").innerHTML = picks.slice(0,10).map(c => {
+    const team = c.team || (c.teams && c.teams[0]);
+    return `<div class="bet"><div class="bet-head"><span class="flag">${flag(team)}</span>
+      <div class="bet-title">${esc(c.label)}<span class="mk">${settleLabel(c)} · pays ${(c.decimal_odds*1).toFixed(2)}×</span></div>
+      <span class="edge-chip">+${(c.edge*100).toFixed(0)}%</span></div>
+      <div class="bet-grid">
+        <div class="cell"><div class="k">Odds</div><div class="v">${c.decimal_odds.toFixed(2)}</div></div>
+        <div class="cell"><div class="k">Model</div><div class="v">${pct(c.model_p)}</div></div>
+        <div class="cell"><div class="k">Implied</div><div class="v">${pct(c.implied_p)}</div></div>
+        <div class="cell"><div class="k">Stake</div><div class="v stake">${money(c.stake)}</div></div>
+      </div></div>`;
+  }).join("") || `<div class="empty">No +EV underdogs at these odds — the market isn't mispricing any longshots right now.</div>`;
+  document.getElementById("upsets-note").textContent = picks.length
+    ? "Most of these lose — that's expected. You come out ahead only because each is +EV (the model rates it likelier than the price implies), so the few winners more than cover the rest over many bets. High variance: expect long dry runs, keep stakes small, and judge it over a big sample — not one slate."
+    : "";
 }
 function settleLabel(s) {
   if (s.kind === "match" || s.market.startsWith("match:"))
