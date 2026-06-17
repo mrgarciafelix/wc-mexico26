@@ -1,0 +1,1666 @@
+[
+ {
+  "number": 1,
+  "stage": "group",
+  "kickoff_utc": "2026-06-11T19:00:00+00:00",
+  "stadium": "Estadio Azteca",
+  "city": "Mexico City",
+  "home_score": 2,
+  "away_score": 0,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "Mexico",
+  "away_team": "South Africa"
+ },
+ {
+  "number": 2,
+  "stage": "group",
+  "kickoff_utc": "2026-06-12T02:00:00+00:00",
+  "stadium": "Estadio Akron",
+  "city": "Zapopan",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "South Korea",
+  "away_team": "Czech Republic"
+ },
+ {
+  "number": 3,
+  "stage": "group",
+  "kickoff_utc": "2026-06-12T19:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Canada",
+  "away_team": "Bosnia and Herzegovina"
+ },
+ {
+  "number": 4,
+  "stage": "group",
+  "kickoff_utc": "2026-06-13T01:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "United States",
+  "away_team": "Paraguay"
+ },
+ {
+  "number": 5,
+  "stage": "group",
+  "kickoff_utc": "2026-06-14T01:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Haiti",
+  "away_team": "Scotland"
+ },
+ {
+  "number": 6,
+  "stage": "group",
+  "kickoff_utc": "2026-06-14T04:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "Australia",
+  "away_team": "Turkey"
+ },
+ {
+  "number": 7,
+  "stage": "group",
+  "kickoff_utc": "2026-06-13T22:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Brazil",
+  "away_team": "Morocco"
+ },
+ {
+  "number": 8,
+  "stage": "group",
+  "kickoff_utc": "2026-06-13T19:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Qatar",
+  "away_team": "Switzerland"
+ },
+ {
+  "number": 9,
+  "stage": "group",
+  "kickoff_utc": "2026-06-14T23:00:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Ivory Coast",
+  "away_team": "Ecuador"
+ },
+ {
+  "number": 10,
+  "stage": "group",
+  "kickoff_utc": "2026-06-14T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Germany",
+  "away_team": "Cura\u00e7ao"
+ },
+ {
+  "number": 11,
+  "stage": "group",
+  "kickoff_utc": "2026-06-14T20:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Netherlands",
+  "away_team": "Japan"
+ },
+ {
+  "number": 12,
+  "stage": "group",
+  "kickoff_utc": "2026-06-15T02:00:00+00:00",
+  "stadium": "Estadio BBVA",
+  "city": "Guadalupe",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Sweden",
+  "away_team": "Tunisia"
+ },
+ {
+  "number": 13,
+  "stage": "group",
+  "kickoff_utc": "2026-06-15T22:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Saudi Arabia",
+  "away_team": "Uruguay"
+ },
+ {
+  "number": 14,
+  "stage": "group",
+  "kickoff_utc": "2026-06-15T16:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Spain",
+  "away_team": "Cape Verde"
+ },
+ {
+  "number": 15,
+  "stage": "group",
+  "kickoff_utc": "2026-06-16T01:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "Iran",
+  "away_team": "New Zealand"
+ },
+ {
+  "number": 16,
+  "stage": "group",
+  "kickoff_utc": "2026-06-15T19:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "Belgium",
+  "away_team": "Egypt"
+ },
+ {
+  "number": 17,
+  "stage": "group",
+  "kickoff_utc": "2026-06-16T19:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "France",
+  "away_team": "Senegal"
+ },
+ {
+  "number": 18,
+  "stage": "group",
+  "kickoff_utc": "2026-06-16T22:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "Iraq",
+  "away_team": "Norway"
+ },
+ {
+  "number": 19,
+  "stage": "group",
+  "kickoff_utc": "2026-06-17T01:00:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Argentina",
+  "away_team": "Algeria"
+ },
+ {
+  "number": 20,
+  "stage": "group",
+  "kickoff_utc": "2026-06-17T04:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Austria",
+  "away_team": "Jordan"
+ },
+ {
+  "number": 21,
+  "stage": "group",
+  "kickoff_utc": "2026-06-17T23:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "Ghana",
+  "away_team": "Panama"
+ },
+ {
+  "number": 22,
+  "stage": "group",
+  "kickoff_utc": "2026-06-17T20:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "England",
+  "away_team": "Croatia"
+ },
+ {
+  "number": 23,
+  "stage": "group",
+  "kickoff_utc": "2026-06-17T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "Portugal",
+  "away_team": "DR Congo"
+ },
+ {
+  "number": 24,
+  "stage": "group",
+  "kickoff_utc": "2026-06-18T02:00:00+00:00",
+  "stadium": "Estadio Azteca",
+  "city": "Mexico City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "Uzbekistan",
+  "away_team": "Colombia"
+ },
+ {
+  "number": 25,
+  "stage": "group",
+  "kickoff_utc": "2026-06-18T16:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "Czech Republic",
+  "away_team": "South Africa"
+ },
+ {
+  "number": 26,
+  "stage": "group",
+  "kickoff_utc": "2026-06-18T19:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Switzerland",
+  "away_team": "Bosnia and Herzegovina"
+ },
+ {
+  "number": 27,
+  "stage": "group",
+  "kickoff_utc": "2026-06-18T22:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Canada",
+  "away_team": "Qatar"
+ },
+ {
+  "number": 28,
+  "stage": "group",
+  "kickoff_utc": "2026-06-19T01:00:00+00:00",
+  "stadium": "Estadio Akron",
+  "city": "Zapopan",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "Mexico",
+  "away_team": "South Korea"
+ },
+ {
+  "number": 29,
+  "stage": "group",
+  "kickoff_utc": "2026-06-20T00:30:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Brazil",
+  "away_team": "Haiti"
+ },
+ {
+  "number": 30,
+  "stage": "group",
+  "kickoff_utc": "2026-06-19T22:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Scotland",
+  "away_team": "Morocco"
+ },
+ {
+  "number": 31,
+  "stage": "group",
+  "kickoff_utc": "2026-06-20T03:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "Turkey",
+  "away_team": "Paraguay"
+ },
+ {
+  "number": 32,
+  "stage": "group",
+  "kickoff_utc": "2026-06-19T19:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "United States",
+  "away_team": "Australia"
+ },
+ {
+  "number": 33,
+  "stage": "group",
+  "kickoff_utc": "2026-06-20T20:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Germany",
+  "away_team": "Ivory Coast"
+ },
+ {
+  "number": 34,
+  "stage": "group",
+  "kickoff_utc": "2026-06-21T00:00:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Ecuador",
+  "away_team": "Cura\u00e7ao"
+ },
+ {
+  "number": 35,
+  "stage": "group",
+  "kickoff_utc": "2026-06-20T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Netherlands",
+  "away_team": "Sweden"
+ },
+ {
+  "number": 36,
+  "stage": "group",
+  "kickoff_utc": "2026-06-21T04:00:00+00:00",
+  "stadium": "Estadio BBVA",
+  "city": "Guadalupe",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Tunisia",
+  "away_team": "Japan"
+ },
+ {
+  "number": 37,
+  "stage": "group",
+  "kickoff_utc": "2026-06-21T22:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Uruguay",
+  "away_team": "Cape Verde"
+ },
+ {
+  "number": 38,
+  "stage": "group",
+  "kickoff_utc": "2026-06-21T16:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Spain",
+  "away_team": "Saudi Arabia"
+ },
+ {
+  "number": 39,
+  "stage": "group",
+  "kickoff_utc": "2026-06-21T19:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "Belgium",
+  "away_team": "Iran"
+ },
+ {
+  "number": 40,
+  "stage": "group",
+  "kickoff_utc": "2026-06-22T01:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "New Zealand",
+  "away_team": "Egypt"
+ },
+ {
+  "number": 41,
+  "stage": "group",
+  "kickoff_utc": "2026-06-23T00:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "Norway",
+  "away_team": "Senegal"
+ },
+ {
+  "number": 42,
+  "stage": "group",
+  "kickoff_utc": "2026-06-22T21:00:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "France",
+  "away_team": "Iraq"
+ },
+ {
+  "number": 43,
+  "stage": "group",
+  "kickoff_utc": "2026-06-22T17:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Argentina",
+  "away_team": "Austria"
+ },
+ {
+  "number": 44,
+  "stage": "group",
+  "kickoff_utc": "2026-06-23T03:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Jordan",
+  "away_team": "Algeria"
+ },
+ {
+  "number": 45,
+  "stage": "group",
+  "kickoff_utc": "2026-06-23T20:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "England",
+  "away_team": "Ghana"
+ },
+ {
+  "number": 46,
+  "stage": "group",
+  "kickoff_utc": "2026-06-23T23:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "Panama",
+  "away_team": "Croatia"
+ },
+ {
+  "number": 47,
+  "stage": "group",
+  "kickoff_utc": "2026-06-23T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "Portugal",
+  "away_team": "Uzbekistan"
+ },
+ {
+  "number": 48,
+  "stage": "group",
+  "kickoff_utc": "2026-06-24T02:00:00+00:00",
+  "stadium": "Estadio Akron",
+  "city": "Zapopan",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "Colombia",
+  "away_team": "DR Congo"
+ },
+ {
+  "number": 49,
+  "stage": "group",
+  "kickoff_utc": "2026-06-24T22:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Scotland",
+  "away_team": "Brazil"
+ },
+ {
+  "number": 50,
+  "stage": "group",
+  "kickoff_utc": "2026-06-24T22:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "C",
+  "home_team": "Morocco",
+  "away_team": "Haiti"
+ },
+ {
+  "number": 51,
+  "stage": "group",
+  "kickoff_utc": "2026-06-24T19:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Switzerland",
+  "away_team": "Canada"
+ },
+ {
+  "number": 52,
+  "stage": "group",
+  "kickoff_utc": "2026-06-24T19:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "B",
+  "home_team": "Bosnia and Herzegovina",
+  "away_team": "Qatar"
+ },
+ {
+  "number": 53,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T01:00:00+00:00",
+  "stadium": "Estadio Azteca",
+  "city": "Mexico City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "Czech Republic",
+  "away_team": "Mexico"
+ },
+ {
+  "number": 54,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T01:00:00+00:00",
+  "stadium": "Estadio BBVA",
+  "city": "Guadalupe",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "A",
+  "home_team": "South Africa",
+  "away_team": "South Korea"
+ },
+ {
+  "number": 55,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T20:00:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Cura\u00e7ao",
+  "away_team": "Ivory Coast"
+ },
+ {
+  "number": 56,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T20:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "E",
+  "home_team": "Ecuador",
+  "away_team": "Germany"
+ },
+ {
+  "number": 57,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T23:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Japan",
+  "away_team": "Sweden"
+ },
+ {
+  "number": 58,
+  "stage": "group",
+  "kickoff_utc": "2026-06-25T23:00:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "F",
+  "home_team": "Tunisia",
+  "away_team": "Netherlands"
+ },
+ {
+  "number": 59,
+  "stage": "group",
+  "kickoff_utc": "2026-06-26T02:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "Turkey",
+  "away_team": "United States"
+ },
+ {
+  "number": 60,
+  "stage": "group",
+  "kickoff_utc": "2026-06-26T02:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "D",
+  "home_team": "Paraguay",
+  "away_team": "Australia"
+ },
+ {
+  "number": 61,
+  "stage": "group",
+  "kickoff_utc": "2026-06-26T19:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "Norway",
+  "away_team": "France"
+ },
+ {
+  "number": 62,
+  "stage": "group",
+  "kickoff_utc": "2026-06-26T19:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "I",
+  "home_team": "Senegal",
+  "away_team": "Iraq"
+ },
+ {
+  "number": 63,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T03:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "Egypt",
+  "away_team": "Iran"
+ },
+ {
+  "number": 64,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T03:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "G",
+  "home_team": "New Zealand",
+  "away_team": "Belgium"
+ },
+ {
+  "number": 65,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T00:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Cape Verde",
+  "away_team": "Saudi Arabia"
+ },
+ {
+  "number": 66,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T00:00:00+00:00",
+  "stadium": "Estadio Akron",
+  "city": "Zapopan",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "H",
+  "home_team": "Uruguay",
+  "away_team": "Spain"
+ },
+ {
+  "number": 67,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T21:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "Panama",
+  "away_team": "England"
+ },
+ {
+  "number": 68,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T21:00:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "L",
+  "home_team": "Croatia",
+  "away_team": "Ghana"
+ },
+ {
+  "number": 69,
+  "stage": "group",
+  "kickoff_utc": "2026-06-28T02:00:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Algeria",
+  "away_team": "Austria"
+ },
+ {
+  "number": 70,
+  "stage": "group",
+  "kickoff_utc": "2026-06-28T02:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "J",
+  "home_team": "Jordan",
+  "away_team": "Argentina"
+ },
+ {
+  "number": 71,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T23:30:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "Colombia",
+  "away_team": "Portugal"
+ },
+ {
+  "number": 72,
+  "stage": "group",
+  "kickoff_utc": "2026-06-27T23:30:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "group": "K",
+  "home_team": "DR Congo",
+  "away_team": "Uzbekistan"
+ },
+ {
+  "number": 73,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-28T19:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "RU",
+   "group": "A"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "B"
+  }
+ },
+ {
+  "number": 74,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-29T20:30:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "E"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "F"
+   ]
+  }
+ },
+ {
+  "number": 75,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-30T01:00:00+00:00",
+  "stadium": "Estadio BBVA",
+  "city": "Guadalupe",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "F"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "C"
+  }
+ },
+ {
+  "number": 76,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-29T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "C"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "F"
+  }
+ },
+ {
+  "number": 77,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-30T21:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "I"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "C",
+    "D",
+    "F",
+    "G",
+    "H"
+   ]
+  }
+ },
+ {
+  "number": 78,
+  "stage": "r32",
+  "kickoff_utc": "2026-06-30T17:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "RU",
+   "group": "E"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "I"
+  }
+ },
+ {
+  "number": 79,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-01T01:00:00+00:00",
+  "stadium": "Estadio Azteca",
+  "city": "Mexico City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "A"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "C",
+    "E",
+    "F",
+    "H",
+    "I"
+   ]
+  }
+ },
+ {
+  "number": 80,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-01T16:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "L"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "E",
+    "H",
+    "I",
+    "J",
+    "K"
+   ]
+  }
+ },
+ {
+  "number": 81,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-02T00:00:00+00:00",
+  "stadium": "Levi's Stadium",
+  "city": "Santa Clara",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "D"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "B",
+    "E",
+    "F",
+    "I",
+    "J"
+   ]
+  }
+ },
+ {
+  "number": 82,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-01T20:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "G"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "A",
+    "E",
+    "H",
+    "I",
+    "J"
+   ]
+  }
+ },
+ {
+  "number": 83,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-02T23:00:00+00:00",
+  "stadium": "BMO Field",
+  "city": "Toronto",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "RU",
+   "group": "K"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "L"
+  }
+ },
+ {
+  "number": 84,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-02T19:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "H"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "J"
+  }
+ },
+ {
+  "number": 85,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-03T03:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "B"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "E",
+    "F",
+    "G",
+    "I",
+    "J"
+   ]
+  }
+ },
+ {
+  "number": 86,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-03T22:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "J"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "H"
+  }
+ },
+ {
+  "number": 87,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-04T01:30:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "W",
+   "group": "K"
+  },
+  "away_slot": {
+   "type": "3RD",
+   "from": [
+    "D",
+    "E",
+    "I",
+    "J",
+    "L"
+   ]
+  }
+ },
+ {
+  "number": 88,
+  "stage": "r32",
+  "kickoff_utc": "2026-07-03T18:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "RU",
+   "group": "D"
+  },
+  "away_slot": {
+   "type": "RU",
+   "group": "G"
+  }
+ },
+ {
+  "number": 89,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-04T21:00:00+00:00",
+  "stadium": "Lincoln Financial Field",
+  "city": "Philadelphia",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 74
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 77
+  }
+ },
+ {
+  "number": 90,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-04T17:00:00+00:00",
+  "stadium": "NRG Stadium",
+  "city": "Houston",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 73
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 75
+  }
+ },
+ {
+  "number": 91,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-05T20:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 76
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 78
+  }
+ },
+ {
+  "number": 92,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-06T00:00:00+00:00",
+  "stadium": "Estadio Azteca",
+  "city": "Mexico City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 79
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 80
+  }
+ },
+ {
+  "number": 93,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-06T19:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 83
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 84
+  }
+ },
+ {
+  "number": 94,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-07T00:00:00+00:00",
+  "stadium": "Lumen Field",
+  "city": "Seattle",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 81
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 82
+  }
+ },
+ {
+  "number": 95,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-07T16:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 86
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 88
+  }
+ },
+ {
+  "number": 96,
+  "stage": "r16",
+  "kickoff_utc": "2026-07-07T20:00:00+00:00",
+  "stadium": "BC Place",
+  "city": "Vancouver",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 85
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 87
+  }
+ },
+ {
+  "number": 97,
+  "stage": "qf",
+  "kickoff_utc": "2026-07-09T20:00:00+00:00",
+  "stadium": "Gillette Stadium",
+  "city": "Foxborough",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 89
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 90
+  }
+ },
+ {
+  "number": 98,
+  "stage": "qf",
+  "kickoff_utc": "2026-07-10T19:00:00+00:00",
+  "stadium": "SoFi Stadium",
+  "city": "Inglewood",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 93
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 94
+  }
+ },
+ {
+  "number": 99,
+  "stage": "qf",
+  "kickoff_utc": "2026-07-11T21:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 91
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 92
+  }
+ },
+ {
+  "number": 100,
+  "stage": "qf",
+  "kickoff_utc": "2026-07-12T01:00:00+00:00",
+  "stadium": "Arrowhead Stadium",
+  "city": "Kansas City",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 95
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 96
+  }
+ },
+ {
+  "number": 101,
+  "stage": "sf",
+  "kickoff_utc": "2026-07-14T19:00:00+00:00",
+  "stadium": "AT&T Stadium",
+  "city": "Arlington",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 97
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 98
+  }
+ },
+ {
+  "number": 102,
+  "stage": "sf",
+  "kickoff_utc": "2026-07-15T19:00:00+00:00",
+  "stadium": "Mercedes-Benz Stadium",
+  "city": "Atlanta",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 99
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 100
+  }
+ },
+ {
+  "number": 103,
+  "stage": "third",
+  "kickoff_utc": "2026-07-18T21:00:00+00:00",
+  "stadium": "Hard Rock Stadium",
+  "city": "Miami Gardens",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "LM",
+   "match": 101
+  },
+  "away_slot": {
+   "type": "LM",
+   "match": 102
+  }
+ },
+ {
+  "number": 104,
+  "stage": "final",
+  "kickoff_utc": "2026-07-19T19:00:00+00:00",
+  "stadium": "MetLife Stadium",
+  "city": "East Rutherford",
+  "home_score": null,
+  "away_score": null,
+  "pen_home": null,
+  "pen_away": null,
+  "home_slot": {
+   "type": "WM",
+   "match": 101
+  },
+  "away_slot": {
+   "type": "WM",
+   "match": 102
+  }
+ }
+]

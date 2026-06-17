@@ -1,0 +1,338 @@
+[
+ {
+  "name": "Algeria",
+  "group": "J",
+  "market_value_eur": 256899999.99999997,
+  "fifa_points": 1564.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Argentina",
+  "group": "J",
+  "market_value_eur": 807500000.0,
+  "fifa_points": 1875.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Australia",
+  "group": "D",
+  "market_value_eur": 77450000.0,
+  "fifa_points": 1581.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Austria",
+  "group": "J",
+  "market_value_eur": 245200000.0,
+  "fifa_points": 1593.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Belgium",
+  "group": "G",
+  "market_value_eur": 547500000.0,
+  "fifa_points": 1735.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Bosnia and Herzegovina",
+  "group": "B",
+  "market_value_eur": 151600000.0,
+  "fifa_points": 1386.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Brazil",
+  "group": "C",
+  "market_value_eur": 928200000.0,
+  "fifa_points": 1761.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Canada",
+  "group": "B",
+  "market_value_eur": 198650000.0,
+  "fifa_points": 1556.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Cape Verde",
+  "group": "H",
+  "market_value_eur": 54500000.0,
+  "fifa_points": 1366.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Colombia",
+  "group": "K",
+  "market_value_eur": 302350000.0,
+  "fifa_points": 1693.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Croatia",
+  "group": "L",
+  "market_value_eur": 387300000.0,
+  "fifa_points": 1717.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Cura\u00e7ao",
+  "group": "E",
+  "market_value_eur": 25780000.0,
+  "fifa_points": 1295.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Czech Republic",
+  "group": "A",
+  "market_value_eur": 188180000.0,
+  "fifa_points": 1501.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "DR Congo",
+  "group": "K",
+  "market_value_eur": 143900000.0,
+  "fifa_points": 1478.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Ecuador",
+  "group": "E",
+  "market_value_eur": 368700000.0,
+  "fifa_points": 1595.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Egypt",
+  "group": "G",
+  "market_value_eur": 116480000.0,
+  "fifa_points": 1563.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "England",
+  "group": "L",
+  "market_value_eur": 1360000000.0,
+  "fifa_points": 1826.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "France",
+  "group": "I",
+  "market_value_eur": 1520000000.0,
+  "fifa_points": 1877.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Germany",
+  "group": "E",
+  "market_value_eur": 947000000.0,
+  "fifa_points": 1730.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Ghana",
+  "group": "L",
+  "market_value_eur": 234600000.0,
+  "fifa_points": 1346.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Haiti",
+  "group": "C",
+  "market_value_eur": 55900000.0,
+  "fifa_points": 1292.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Iran",
+  "group": "G",
+  "market_value_eur": 32049999.999999996,
+  "fifa_points": 1615.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Iraq",
+  "group": "I",
+  "market_value_eur": 21200000.0,
+  "fifa_points": 1447.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Ivory Coast",
+  "group": "E",
+  "market_value_eur": 522100000.0,
+  "fifa_points": 1533.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Japan",
+  "group": "F",
+  "market_value_eur": 266850000.00000003,
+  "fifa_points": 1660.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Jordan",
+  "group": "J",
+  "market_value_eur": 20300000.0,
+  "fifa_points": 1391.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Mexico",
+  "group": "A",
+  "market_value_eur": 191850000.0,
+  "fifa_points": 1681.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Morocco",
+  "group": "C",
+  "market_value_eur": 447700000.0,
+  "fifa_points": 1756.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Netherlands",
+  "group": "F",
+  "market_value_eur": 754200000.0,
+  "fifa_points": 1758.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "New Zealand",
+  "group": "G",
+  "market_value_eur": 34350000.0,
+  "fifa_points": 1282.0,
+  "confed": "OFC"
+ },
+ {
+  "name": "Norway",
+  "group": "I",
+  "market_value_eur": 589900000.0,
+  "fifa_points": 1551.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Panama",
+  "group": "L",
+  "market_value_eur": 34550000.0,
+  "fifa_points": 1541.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Paraguay",
+  "group": "D",
+  "market_value_eur": 153650000.0,
+  "fifa_points": 1504.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Portugal",
+  "group": "K",
+  "market_value_eur": 1010000000.0,
+  "fifa_points": 1764.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Qatar",
+  "group": "B",
+  "market_value_eur": 19930000.0,
+  "fifa_points": 1455.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Saudi Arabia",
+  "group": "H",
+  "market_value_eur": 40680000.0,
+  "fifa_points": 1421.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Scotland",
+  "group": "C",
+  "market_value_eur": 170250000.0,
+  "fifa_points": 1498.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Senegal",
+  "group": "I",
+  "market_value_eur": 478100000.0,
+  "fifa_points": 1689.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "South Africa",
+  "group": "A",
+  "market_value_eur": 49250000.0,
+  "fifa_points": 1430.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "South Korea",
+  "group": "A",
+  "market_value_eur": 139050000.0,
+  "fifa_points": 1589.0,
+  "confed": "AFC"
+ },
+ {
+  "name": "Spain",
+  "group": "H",
+  "market_value_eur": 1220000000.0,
+  "fifa_points": 1876.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Sweden",
+  "group": "F",
+  "market_value_eur": 406080000.0,
+  "fifa_points": 1515.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Switzerland",
+  "group": "B",
+  "market_value_eur": 332500000.0,
+  "fifa_points": 1649.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "Tunisia",
+  "group": "F",
+  "market_value_eur": 69950000.0,
+  "fifa_points": 1483.0,
+  "confed": "CAF"
+ },
+ {
+  "name": "Turkey",
+  "group": "D",
+  "market_value_eur": 473700000.0,
+  "fifa_points": 1599.0,
+  "confed": "UEFA"
+ },
+ {
+  "name": "United States",
+  "group": "D",
+  "market_value_eur": 385650000.0,
+  "fifa_points": 1673.0,
+  "confed": "CONCACAF"
+ },
+ {
+  "name": "Uruguay",
+  "group": "H",
+  "market_value_eur": 359300000.0,
+  "fifa_points": 1673.0,
+  "confed": "CONMEBOL"
+ },
+ {
+  "name": "Uzbekistan",
+  "group": "K",
+  "market_value_eur": 85330000.0,
+  "fifa_points": 1465.0,
+  "confed": "AFC"
+ }
+]

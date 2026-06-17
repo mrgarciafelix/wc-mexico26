@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+httpx
+numpy
+pandas
+lxml
+apscheduler
+beautifulsoup4

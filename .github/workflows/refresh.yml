@@ -1,0 +1,42 @@
+name: Refresh snapshot
+
+# Re-scrape results, re-simulate, and redeploy the snapshot so the live site
+# stays current without anyone running publish.ps1. Runs on a schedule and can
+# be triggered manually from the Actions tab.
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes (UTC); GitHub may delay under load
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-snapshot
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Refresh model + export snapshot
+        env:
+          WC_SNAPSHOT_OUT: data/snapshot.json
+        run: python -m scripts.refresh_and_export
+      - name: Commit & push if the snapshot changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/snapshot.json
+          if git diff --cached --quiet; then
+            echo "No snapshot change."
+          else
+            git commit -m "Auto-refresh snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
