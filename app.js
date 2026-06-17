@@ -25,6 +25,19 @@ function flag(team) {
   if (c === "gb-eng") return "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
   return [...c.toUpperCase()].map(ch => String.fromCodePoint(0x1F1A5 + ch.charCodeAt(0))).join("");
 }
+const CODE = {
+  "Mexico":"MEX","South Africa":"RSA","South Korea":"KOR","Czech Republic":"CZE",
+  "Canada":"CAN","Bosnia and Herzegovina":"BIH","Qatar":"QAT","Switzerland":"SUI",
+  "Brazil":"BRA","Haiti":"HAI","Morocco":"MAR","Scotland":"SCO","Australia":"AUS",
+  "Paraguay":"PAR","Turkey":"TUR","United States":"USA","Curaçao":"CUW","Ecuador":"ECU",
+  "Germany":"GER","Ivory Coast":"CIV","Japan":"JPN","Netherlands":"NED","Sweden":"SWE",
+  "Tunisia":"TUN","Belgium":"BEL","Egypt":"EGY","Iran":"IRN","New Zealand":"NZL",
+  "Cape Verde":"CPV","Saudi Arabia":"KSA","Spain":"ESP","Uruguay":"URU","France":"FRA",
+  "Iraq":"IRQ","Norway":"NOR","Senegal":"SEN","Algeria":"ALG","Argentina":"ARG",
+  "Austria":"AUT","Jordan":"JOR","Colombia":"COL","DR Congo":"COD","Portugal":"POR",
+  "Uzbekistan":"UZB","Croatia":"CRO","England":"ENG","Ghana":"GHA","Panama":"PAN",
+};
+const code = t => CODE[t] || (t ? t.replace(/[^A-Za-z]/g,"").slice(0,3).toUpperCase() : "—");
 const pct = x => x == null ? "—" : (100 * x).toFixed(1) + "%";
 const pp = x => (x >= 0 ? "+" : "") + (100 * x).toFixed(2) + "pp";
 const fair = p => (p && p > 0) ? (1 / p).toFixed(1 / p >= 100 ? 0 : 2) : "—";
@@ -97,7 +110,7 @@ function optimize(cands, bankroll, mult, opt) {
 
   // singles: one bet per mutually-exclusive group (can't back two outcomes of
   // a match, and only one team wins each outright) — keep best edge per group.
-  const mgroup = c => c.market.startsWith("match:") ? c.market : "outright:" + c.market;
+  const mgroup = c => c.mutex || (c.market.startsWith("match:") ? c.market : "outright:" + c.market);
   const seenG = new Set(); const dedup = [];
   for (const c of value) { const g = mgroup(c); if (seenG.has(g)) continue; seenG.add(g); dedup.push(c); }
   let singles = dedup.map(c => ({...c, stake: bankroll * mult * c.kelly}));
@@ -127,7 +140,7 @@ function optimize(cands, bankroll, mult, opt) {
     const f = kellyF(s.P, s.O), stake = Math.round(Math.min(bankroll*mult*f, bankroll*0.05)*100)/100;
     parlays.push({
       legs: s.combo.map(l => ({label:l.label, selection:l.selection, decimal_odds:l.decimal_odds,
-                               model_p:l.model_p, edge:l.edge, teams:l.teams})),
+                               model_p:l.model_p, edge:l.edge, teams:l.teams, team:l.team, kind:l.kind})),
       combined_odds: Math.round(s.O*100)/100, model_p: s.P, implied_p: 1/s.O, edge: s.E,
       kelly: f, stake, potential_return: Math.round(stake*s.O*100)/100, exp_profit: Math.round(stake*s.E*100)/100,
     });
@@ -149,23 +162,25 @@ function candidates() {
 let showAllSingles = false;
 function renderBets() {
   const plan = optimize(candidates(), BANKROLL, KELLY);
-  const sm = plan.summary;
+  // singles board = match 1X2 + outrights (props live on the Today tab + parlays)
+  const singles = plan.singles.filter(s => s.kind !== "prop");
+  const stake = Math.round(singles.reduce((a,x)=>a+x.stake,0)*100)/100;
+  const profit = Math.round(singles.reduce((a,x)=>a+x.exp_profit,0)*100)/100;
   document.getElementById("bets-summary").innerHTML = [
-    ["Value bets", sm.n_value, "+EV selections", ""],
-    ["Total stake", money(sm.singles_stake), `${(KELLY*100)|0}% Kelly`, ""],
-    ["Exp. profit", money(sm.singles_exp_profit), "if odds hold", "good"],
-    ["Exp. ROI", (sm.singles_roi*100).toFixed(1)+"%", "on staked", "good"],
+    ["Value bets", singles.length, "+EV singles", ""],
+    ["Total stake", money(stake), `${(KELLY*100)|0}% Kelly`, ""],
+    ["Exp. profit", money(profit), "if odds hold", "good"],
+    ["Exp. ROI", (stake ? profit/stake*100 : 0).toFixed(1)+"%", "on staked", "good"],
   ].map(([k,v,n,c]) => `<div class="stat"><div class="k">${k}</div>
     <div class="v ${c}">${v}</div><div class="note">${n}</div></div>`).join("");
 
-  const shown = showAllSingles ? plan.singles : plan.singles.slice(0, 6);
-  const sl = document.getElementById("singles-list");
-  sl.innerHTML = shown.map((s,i) => betCard(s, i===0)).join("")
+  const shown = showAllSingles ? singles : singles.slice(0, 6);
+  document.getElementById("singles-list").innerHTML = shown.map((s,i) => betCard(s, i===0)).join("")
     || `<div class="empty">No positive-edge singles at these odds.<br>Lower your prices or check back after results move the model.</div>`;
   const more = document.getElementById("singles-more");
-  if (plan.singles.length > 6) {
+  if (singles.length > 6) {
     more.classList.remove("hidden");
-    more.textContent = showAllSingles ? "Show fewer" : `Show all ${plan.singles.length} value bets`;
+    more.textContent = showAllSingles ? "Show fewer" : `Show all ${singles.length} value singles`;
   } else more.classList.add("hidden");
 
   document.getElementById("parlays-list").innerHTML = plan.parlays.map((p,i) => parlayCard(p,i)).join("")
@@ -177,8 +192,9 @@ function settleLabel(s) {
   return "long-term · settles Jul";
 }
 function betCard(s, top) {
-  const team = s.teams && s.teams[0];
-  const mk = {champion:"World Cup winner", final:"Reach final", sf:"Reach semis"}[s.market]
+  const team = s.team || (s.teams && s.teams[0]);
+  const mk = s.kind === "prop" ? esc(s.match || "player prop")
+    : {champion:"World Cup winner", final:"Reach final", sf:"Reach semis"}[s.market]
     || (s.market.startsWith("match:") ? (s.stage?s.stage.toUpperCase():"")+" · match" : s.market);
   const w = Math.min(100, 100 * s.model_p), wi = Math.min(100, 100 * s.implied_p);
   return `<div class="bet ${top?"top":""}">
@@ -195,7 +211,7 @@ function betCard(s, top) {
     </div></div>`;
 }
 function parlayCard(p, i) {
-  const legs = p.legs.map(l => `<div class="leg"><span class="flag">${flag(l.teams&&l.teams[0])}</span>
+  const legs = p.legs.map(l => `<div class="leg"><span class="flag">${flag(l.team || (l.teams&&l.teams[0]))}</span>
     <span class="ln">${esc(l.label)}</span><span class="lo">${l.decimal_odds.toFixed(2)}</span></div>`).join("");
   return `<div class="parlay ${i===0?"best":""}">
     <div class="parlay-top"><div><div class="lbl">${i===0?"★ Top parlay":"Alt parlay"} · ${p.legs.length} legs</div>
@@ -212,14 +228,16 @@ function parlayCard(p, i) {
 
 /* ================= TODAY tab ================= */
 function todaySlate() {
-  // the next slate to be played: earliest upcoming match date in the data
+  // the next slate to be played: matches sharing the earliest upcoming *local*
+  // day (grouping by local date keeps it consistent with the times shown).
   const up = S.matches.filter(m => m.home_score == null && m.home_team && m.away_team
-    && m.kickoff_utc && m.forecast);
-  if (!up.length) return null;
-  const day = up.map(m => m.kickoff_utc.slice(0,10)).sort()[0];
-  const matches = up.filter(m => m.kickoff_utc.slice(0,10) === day)
+    && m.kickoff_utc && m.forecast)
     .sort((a,b) => a.kickoff_utc.localeCompare(b.kickoff_utc));
-  return {day, matches, isToday: day === new Date().toISOString().slice(0,10)};
+  if (!up.length) return null;
+  const localDay = m => new Date(m.kickoff_utc).toDateString();
+  const day = localDay(up[0]);
+  const matches = up.filter(m => localDay(m) === day);
+  return {day, matches, isToday: day === new Date().toDateString()};
 }
 function todayCandidates(slate) {
   const nos = new Set(slate.matches.map(m => m.number));
@@ -234,20 +252,22 @@ function renderToday() {
     document.getElementById("today-acca").innerHTML = ""; return;
   }
   const plan = optimize(todayCandidates(slate), BANKROLL, KELLY);
-  const pickBy = {}; plan.singles.forEach(s => pickBy[s.match_no] = s);
-  const stake = plan.summary.singles_stake, expP = plan.summary.singles_exp_profit;
-  const bestCase = Math.round(plan.singles.reduce((a,x) => a + x.stake*(x.decimal_odds-1), 0)*100)/100;
+  const matchSingles = plan.singles.filter(s => s.kind === "match");
+  const pickBy = {}; matchSingles.forEach(s => pickBy[s.match_no] = s);
+  const stake = Math.round(matchSingles.reduce((a,x)=>a+x.stake,0)*100)/100;
+  const expP = Math.round(matchSingles.reduce((a,x)=>a+x.exp_profit,0)*100)/100;
+  const bestCase = Math.round(matchSingles.reduce((a,x) => a + x.stake*(x.decimal_odds-1), 0)*100)/100;
   document.getElementById("today-summary").innerHTML = [
-    ["Today's bets", plan.singles.length, "settle tonight", ""],
+    ["Today's picks", matchSingles.length, "settle tonight", ""],
     ["Stake", money(stake), `${(KELLY*100)|0}% Kelly`, ""],
     ["Exp. profit", money(expP), "on average", "good"],
     ["If all win", "+"+money(bestCase), `bankroll → ${money(BANKROLL+bestCase)}`, "good"],
   ].map(([k,v,n,c]) => `<div class="stat"><div class="k">${k}</div>
     <div class="v ${c}">${v}</div><div class="note">${n}</div></div>`).join("");
-  const d = new Date(slate.day + "T12:00:00");
-  document.getElementById("today-date").textContent = (slate.isToday ? "TODAY · " : "") + d.toDateString();
+  document.getElementById("today-date").textContent = (slate.isToday ? "TODAY · " : "") + slate.day.toUpperCase();
   document.getElementById("today-matches").innerHTML =
     slate.matches.map(m => todayMatchCard(m, pickBy[m.number])).join("");
+  renderTodayProps(slate);
   document.getElementById("today-acca").innerHTML = plan.parlays.length ? parlayCard(plan.parlays[0], 0)
     : `<div class="empty">No +EV multi-match parlay from today's card at these odds.</div>`;
   document.getElementById("today-sub").textContent = slate.isToday
@@ -256,11 +276,12 @@ function renderToday() {
 }
 function todayMatchCard(m, pick) {
   const fc = m.forecast || {};
-  const cells = [["home","1"],["draw","X"],["away","2"]].map(([sel,sym]) => {
+  const labels = {home: code(m.home_label), draw: "Draw", away: code(m.away_label)};
+  const cells = ["home","draw","away"].map(sel => {
     const key = `match:${m.number}|${sel}`, o = ODDS[key], p = fc[sel];
     const e = o > 1 ? p*o - 1 : null, ec = e == null ? "flat" : e > 0 ? "up" : "down";
     const isPick = pick && pick.selection === sel;
-    return `<div class="tm-out ${isPick?"pick":""}"><div class="s">${sym}</div>
+    return `<div class="tm-out ${isPick?"pick":""}"><div class="s">${labels[sel]}</div>
       <div class="mp">${pct(p)}</div>
       <input class="odds-edit tm-odds" inputmode="decimal" data-key="${esc(key)}" value="${o ?? ""}">
       <div class="e ${ec}">${e == null ? "—" : (e>0?"+":"")+(e*100).toFixed(0)+"%"}</div></div>`;
@@ -274,6 +295,27 @@ function todayMatchCard(m, pick) {
     <div class="tm-teams">${esc(m.home_label)} ${flag(m.home_label)} <span class="vs">v</span> ${flag(m.away_label)} ${esc(m.away_label)}</div>
     <div class="tm-grid">${cells}</div>
     ${pickLine}</div>`;
+}
+function renderTodayProps(slate) {
+  const nos = new Set(slate.matches.map(m => m.number));
+  const byMatch = {};
+  S.markets.filter(m => m.kind === "prop" && nos.has(m.match_no))
+    .forEach(p => { (byMatch[p.match_no] = byMatch[p.match_no] || []).push(p); });
+  const html = slate.matches.filter(m => byMatch[m.number]).map(m => {
+    const rows = byMatch[m.number].sort((a,b) => b.model_p - a.model_p).slice(0, 10).map(pr => {
+      const o = ODDS[pr.key], e = o > 1 ? pr.model_p*o - 1 : null;
+      const ec = e == null ? "flat" : e > 0 ? "up" : "down";
+      return `<div class="prop"><span class="flag">${flag(pr.team)}</span>
+        <span class="pn">${esc(pr.player)} <i>${esc(pr.prop_type)}</i></span>
+        <span class="pp">${pct(pr.model_p)}</span>
+        <input class="odds-edit prop-odds" inputmode="decimal" data-key="${esc(pr.key)}" value="${o ?? ""}">
+        <span class="pe ${ec}">${e == null ? "—" : (e>0?"+":"")+(e*100).toFixed(0)+"%"}</span></div>`;
+    }).join("");
+    return `<details class="prop-match" open><summary>${esc(code(m.home_label))} v ${esc(code(m.away_label))}
+      <span class="hint">${byMatch[m.number].length} props</span></summary>${rows}</details>`;
+  }).join("");
+  document.getElementById("today-props").innerHTML = html ||
+    `<div class="empty">No player props for today's matches.</div>`;
 }
 
 /* odds editing (event-delegated, recompute on commit) */
@@ -314,19 +356,19 @@ async function syncSettings() {
 }
 
 /* ---------------- browse / edit all odds ---------------- */
-const browseOpen = () => document.querySelector(".browse").open;
+const browseOpen = () => document.getElementById("value-browse").open;
 const MK_LABEL = {champion:"World Cup winner", final:"Reach final", sf:"Reach semis"};
 function renderBrowse() {
   const q = (document.getElementById("browse-search").value || "").toLowerCase();
   const groups = {};
   for (const m of S.markets) {
     if (q && !(m.label.toLowerCase().includes(q) || (m.selection||"").toLowerCase().includes(q))) continue;
-    const g = m.kind === "outright" ? MK_LABEL[m.market] : "Matches";
+    const g = m.kind === "outright" ? MK_LABEL[m.market] : m.kind === "prop" ? "Player props" : "Match result (1X2)";
     (groups[g] = groups[g] || []).push(m);
   }
-  const order = ["World Cup winner","Reach final","Reach semis","Matches"];
+  const order = ["Match result (1X2)","Player props","World Cup winner","Reach final","Reach semis"];
   document.getElementById("browse-list").innerHTML = order.filter(g => groups[g]).map(g => {
-    const rows = groups[g].slice(0, g === "Matches" ? 120 : 999).map(m => {
+    const rows = groups[g].slice(0, 200).map(m => {
       const o = ODDS[m.key], e = o > 1 ? edge(m.model_p, o) : null;
       const ec = e == null ? "flat" : e > 0 ? "up" : "down";
       return `<div class="brow"><span class="ln">${esc(m.label)}</span>
@@ -338,7 +380,7 @@ function renderBrowse() {
   }).join("") || `<div class="empty">no markets match "${esc(q)}"</div>`;
 }
 document.getElementById("browse-search").addEventListener("input", () => { if (browseOpen()) renderBrowse(); });
-document.querySelector(".browse").addEventListener("toggle", e => { if (e.target.open) renderBrowse(); });
+document.getElementById("value-browse").addEventListener("toggle", e => { if (e.target.open) renderBrowse(); });
 document.getElementById("browse-reset").addEventListener("click", () => {
   localStorage.removeItem(LS.odds); ODDS = Object.assign({}, S.sample_odds);
   initStateLabel(); renderBrowse(); renderBets();
@@ -378,30 +420,36 @@ document.getElementById("title-metric").addEventListener("click", e => {
 function renderMatches() {
   const up = document.getElementById("matches-upcoming").checked;
   let last = "";
-  const ms = S.matches.filter(m => !up || m.home_score == null);
+  const ms = S.matches
+    .filter(m => !up || m.home_score == null)
+    .sort((a, b) => (a.kickoff_utc || "9999").localeCompare(b.kickoff_utc || "9999") || a.number - b.number);
   document.getElementById("matches-list").innerHTML = ms.map(m => {
-    const day = (m.kickoff_utc||"").slice(0,10);
-    const hdr = day !== last ? `<div class="mday">${dayName(m.kickoff_utc)}</div>` : "";
+    const day = m.kickoff_utc ? new Date(m.kickoff_utc).toDateString() : "TBD";
+    const hdr = day !== last ? `<div class="mday">${day.toUpperCase()}</div>` : "";
     last = day;
     const played = m.home_score != null;
     const score = played
       ? `<span class="ft">${m.home_score}–${m.away_score}</span>${m.pen_home!=null?` <span class="tm">(p ${m.pen_home}–${m.pen_away})</span>`:""}`
       : `<span class="tm">${clockUTC(m.kickoff_utc)}</span>`;
     const fc = m.forecast;
-    let p3 = "";
-    if (fc) {
+    let viz = "";
+    if (fc && !played) {
       const mx = Math.max(fc.home, fc.draw, fc.away);
-      p3 = `<div class="p3">
-        <div class="${fc.home===mx?"lead":""}">1<b>${pct(fc.home)}</b></div>
-        <div class="${fc.draw===mx?"lead":""}">X<b>${pct(fc.draw)}</b></div>
-        <div class="${fc.away===mx?"lead":""}">2<b>${pct(fc.away)}</b></div></div>`;
+      const seg = (v, c) => `<i class="${c}" style="width:${100*v}%"></i>`;
+      viz = `<div class="mr-bar">${seg(fc.home,"h")}${seg(fc.draw,"d")}${seg(fc.away,"a")}</div>
+        <div class="mr-odds">
+          <span class="o ${fc.home===mx?"lead":""}"><b>${esc(code(m.home_label))}</b> ${pct(fc.home)}</span>
+          <span class="o ${fc.draw===mx?"lead":""}">Draw ${pct(fc.draw)}</span>
+          <span class="o ${fc.away===mx?"lead":""}"><b>${esc(code(m.away_label))}</b> ${pct(fc.away)}</span></div>`;
     }
-    return hdr + `<div class="mrow"><div class="mtop">
-        <span class="mno">M${m.number} · ${esc(m.stage)}${m.group_letter?" "+m.group_letter:""}</span>
-        <span class="mscore">${score}</span></div>
-      <div class="teams"><span class="h">${esc(m.home_label)} ${flag(m.home_label)}</span>
-        <span class="vs">v</span><span class="a">${flag(m.away_label)} ${esc(m.away_label)}</span></div>
-      ${p3}</div>`;
+    return hdr + `<div class="mrow ${played?"done":""}">
+      <div class="mr-top"><span class="mr-tag">M${m.number} · ${esc(m.stage)}${m.group_letter?" "+m.group_letter:""}</span>
+        <span class="mr-when">${score}</span></div>
+      <div class="mr-teams">
+        <span class="mr-team h"><span class="flag">${flag(m.home_label)}</span> ${esc(m.home_label)}</span>
+        <span class="mr-vs">${played?"":"vs"}</span>
+        <span class="mr-team a">${esc(m.away_label)} <span class="flag">${flag(m.away_label)}</span></span></div>
+      ${viz}</div>`;
   }).join("") || `<div class="empty">nothing to show</div>`;
 }
 document.getElementById("matches-upcoming").addEventListener("change", renderMatches);

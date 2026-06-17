@@ -44,6 +44,9 @@
     <h2 class="sec">🔥 Today's card <span class="sec-sub" id="today-date"></span></h2>
     <div id="today-matches" class="stack"></div>
 
+    <h2 class="sec">⚽ Player props <span class="sec-sub">parlay legs · estimated from xG</span></h2>
+    <div id="today-props" class="stack"></div>
+
     <h2 class="sec">🎟️ Let it ride <span class="sec-sub">press today's wins into one ticket</span></h2>
     <div id="today-acca" class="stack"></div>
 
@@ -85,7 +88,7 @@
     <h2 class="sec">🎟️ Best parlay <span class="sec-sub">independent legs · growth-optimal</span></h2>
     <div id="parlays-list" class="stack"></div>
 
-    <details class="browse">
+    <details class="browse" id="value-browse">
       <summary>Browse &amp; edit all market odds</summary>
       <p class="micro">Set your bookmaker's decimal odds for any selection — the plan above updates instantly. Stored on this device only.</p>
       <div class="browse-tools">
@@ -133,6 +136,7 @@
 
 <div id="disclaimer">
   Model: Elo (49k internationals) + market value + form → calibrated Poisson → Monte Carlo.
+  Player props estimated from team xG + each player's scoring share (not a live stats feed) — calibrate against your book.
   Illustrative odds shown until you enter your bookmaker's prices. Research only — no model guarantees profit. Bet responsibly. 18+.
 </div>
 
