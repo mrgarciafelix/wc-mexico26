@@ -184,16 +184,19 @@ PROP_MATCHES = 10           # near-window matches that get player props
 PROP_TOPN = 6               # scoring threats per team
 
 
-def sample_book(p: float, key: str, overround: float = 0.06) -> float:
-    """Deterministic, realistic illustrative odds: fair price nudged by a
-    bounded per-selection divergence and a bookmaker overround. ~1/3 of
-    selections land +EV vs the model — what a real board looks like."""
+def sample_book(p: float, key: str, overround: float = 0.05) -> float:
+    """Deterministic *illustrative* bookmaker odds that behave like a real
+    board: a bookmaker margin **plus the favourite–longshot bias** — books shade
+    longshots short, so underdogs price as NEGATIVE value — with a small
+    market-disagreement wobble so a realistic minority of selections (mostly
+    favourites) show an edge. Placeholders only: enter your bookmaker's real
+    prices for genuine edges. (implied = p**0.93 lifts low p → dogs overpriced.)"""
     if not p or p <= 0:
         return 0.0
-    fair = 1.0 / p
     h = int(hashlib.md5(key.encode()).hexdigest(), 16)
-    div = 0.86 + (h % 1000) / 1000.0 * 0.30
-    return round(fair * div / (1.0 + overround), 2)
+    wobble = 1.0 + ((h % 1000) / 1000.0 - 0.5) * 0.38        # ±19% disagreement
+    implied = min(0.97, (p ** 0.93) * (1.0 + overround) * wobble)
+    return round(1.0 / implied, 2)
 
 
 def build_snapshot() -> dict:
