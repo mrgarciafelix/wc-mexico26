@@ -313,6 +313,7 @@ function renderToday() {
     slate.matches.map(m => todayMatchCard(m, pickBy[m.number])).join("");
   renderSGP(slate);
   renderTodayProps(slate);
+  renderAccuracy();
   document.getElementById("today-acca").innerHTML = plan.parlays.length ? parlayCard(plan.parlays[0], 0)
     : `<div class="empty">No +EV multi-match parlay from today's card at these odds.</div>`;
   document.getElementById("today-sub").textContent = slate.isToday
@@ -340,6 +341,20 @@ function todayMatchCard(m, pick) {
     <div class="tm-teams">${esc(m.home_label)} ${flag(m.home_label)} <span class="vs">v</span> ${flag(m.away_label)} ${esc(m.away_label)}</div>
     <div class="tm-grid">${cells}</div>
     ${pickLine}</div>`;
+}
+function renderAccuracy() {
+  const a = S.meta && S.meta.accuracy, el = document.getElementById("model-accuracy");
+  if (!el) return;
+  if (!a) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="acc-card">
+    <div class="acc-head">📊 Model accuracy <span class="hint">match 1X2 · backtested on ${(a.n||0).toLocaleString()} internationals</span></div>
+    <div class="acc-grid">
+      <div><b>${(a.accuracy*100).toFixed(0)}%</b><span>correct<br>(chance ${(a.baseline_accuracy*100).toFixed(0)}%)</span></div>
+      <div><b class="up">+${a.logloss_edge_pct}%</b><span>better than<br>no-skill</span></div>
+      <div><b>${(a.ece*100).toFixed(1)}%</b><span>calibration<br>error (low=good)</span></div>
+    </div>
+    <p class="micro">Genuinely well-calibrated on single matches. Champion/outright odds are noisier (the tournament sim over-credits underdog deep runs). Any new model feature has to beat these numbers out-of-sample to ship.</p>
+  </div>`;
 }
 function renderTodayProps(slate) {
   const nos = new Set(slate.matches.map(m => m.number));

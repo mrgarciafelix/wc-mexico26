@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 
+from backend import backtest
 from backend import db as dbm
 from backend import odds_api
 from backend import updater
@@ -30,6 +31,7 @@ def main() -> None:
         print(f"update: run {res.get('run_id')} · {len(changes)} changes · "
               f"{res.get('n_sims')} sims · {new_played} played")
         odds_api.sync(con)                      # live bookmaker odds (cached/rate-limited)
+        backtest.cached()                       # warm the model-accuracy cache
     except Exception as e:
         print(f"update warning: {e} (keeping last good state)")
     finally:

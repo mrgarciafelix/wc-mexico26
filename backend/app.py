@@ -315,6 +315,14 @@ def build_snapshot() -> dict:
         odds_source = {"live": live_n > 0, "live_markets": live_n,
                        "books": live_file.get("books", 0),
                        "fetched_at": live_file.get("fetched_at")}
+        try:
+            from . import backtest as _bt
+            bt = _bt.cached()
+            accuracy = {k: bt.get(k) for k in (
+                "n", "accuracy", "baseline_accuracy", "model_logloss",
+                "baseline_logloss", "logloss_edge_pct", "ece", "window")}
+        except Exception:
+            accuracy = None
 
         # plan candidates straight from the catalog (same as the frontend)
         by_key = {mk["key"]: mk for mk in markets}
@@ -343,7 +351,7 @@ def build_snapshot() -> dict:
                  "matches_total": ov["matches_total"],
                  "bankroll": bankroll, "kelly_fraction": kf,
                  "rho": params().get("rho", 0.0), "max_goals": MAX_GOALS,
-                 "odds_source": odds_source},
+                 "odds_source": odds_source, "accuracy": accuracy},
         "teams": ov["teams"], "groups": gr, "matches": ms,
         "events": ov["events"], "movers": mv,
         "markets": markets, "sample_odds": sample, "plan": plan,
