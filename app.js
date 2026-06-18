@@ -603,6 +603,18 @@ document.getElementById("browse-reset").addEventListener("click", () => {
 
 /* ================= TITLE RACE tab ================= */
 let titleMetric = "champion";
+function strengthBreakdown(s) {
+  if (!s) return "";
+  const adj = (k, v) => `<div class="sb-chip"><span>${k}</span><b class="${v>0?"up":v<0?"down":""}">${v>0?"+":""}${v}</b></div>`;
+  return `<div class="tdetail hidden">
+    <div class="sb-row">
+      <div class="sb-chip"><span>Elo</span><b>${Math.round(s.elo)}</b></div>
+      ${adj("Market value", s.mv_adj)}${adj("Intl form", s.form_adj)}
+      ${adj("Club form", s.club_form_adj ?? 0)}${adj("Injuries", s.injury_adj)}
+    </div>
+    <div class="sb-tot">Strength <b>${Math.round(s.strength)}</b> — higher is stronger.
+      "Club form" = squad's current club xG + minutes (live). Tap to close.</div></div>`;
+}
 function renderTitle() {
   const rows = [...S.teams].sort((a,b) => b.probs[titleMetric] - a.probs[titleMetric]);
   const max = rows[0].probs[titleMetric] || 1;
@@ -618,17 +630,23 @@ function renderTitle() {
     const p = t.probs[titleMetric], d = t.delta ? t.delta[titleMetric] : 0;
     const dc = d > 0.0005 ? "up" : d < -0.0005 ? "down" : "flat";
     const dt = dc === "flat" ? "·" : `${d>0?"▲":"▼"} ${pp(d).replace("+","")}`;
-    return `<div class="trow"><span class="rank">${i+1}</span><span class="flag">${flag(t.team)}</span>
+    return `<div class="titem">
+      <div class="trow"><span class="rank">${i+1}</span><span class="flag">${flag(t.team)}</span>
       <div class="who"><div class="nm">${esc(t.team)}</div><div class="gp">GROUP ${t.group}</div>
         <div class="bar"><i style="width:${100*p/max}%"></i></div></div>
       <div class="pr"><div class="p">${pct(p)}</div><div class="o">${fair(p)}</div></div>
-      <div class="dl ${dc}">${dt}</div></div>`;
+      <div class="dl ${dc}">${dt}</div></div>
+      ${strengthBreakdown(t.strength)}</div>`;
   }).join("");
 }
 document.getElementById("title-metric").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll("#title-metric button").forEach(x => x.classList.toggle("active", x===b));
   titleMetric = b.dataset.m; renderTitle();
+});
+document.getElementById("title-list").addEventListener("click", e => {
+  const item = e.target.closest(".titem"); if (!item) return;
+  const d = item.querySelector(".tdetail"); if (d) d.classList.toggle("hidden");
 });
 
 /* ================= MATCHES tab ================= */

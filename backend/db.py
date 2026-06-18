@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS probs (
   PRIMARY KEY (run_id, team, metric));
 CREATE TABLE IF NOT EXISTS strengths (
   run_id INTEGER, team TEXT, elo REAL, mv_adj REAL, form_adj REAL,
-  injury_adj REAL, manual_adj REAL, strength REAL,
+  injury_adj REAL, manual_adj REAL, club_form_adj REAL DEFAULT 0, strength REAL,
   PRIMARY KEY (run_id, team));
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, type TEXT, team TEXT,
@@ -58,6 +58,10 @@ def connect() -> sqlite3.Connection:
 def init_db(con: sqlite3.Connection) -> bool:
     """Create schema; load seed data on first run. Returns True if seeded."""
     con.executescript(SCHEMA)
+    try:                                   # migrate older DBs: add club_form_adj
+        con.execute("ALTER TABLE strengths ADD COLUMN club_form_adj REAL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     if con.execute("SELECT COUNT(*) c FROM teams").fetchone()["c"]:
         return False
     teams = json.loads((SEED / "teams.json").read_text(encoding="utf-8"))

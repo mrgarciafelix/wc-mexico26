@@ -27,7 +27,8 @@ def mv_zscores(teams: list[dict]) -> dict[str, float]:
 def team_strengths(teams: list[dict], elo: dict[str, float],
                    form: dict[str, float],
                    injury_importance_out: dict[str, float],
-                   manual_adj: dict[str, float] | None = None) -> dict[str, dict]:
+                   manual_adj: dict[str, float] | None = None,
+                   club_form: dict[str, float] | None = None) -> dict[str, dict]:
     """Per team: blended strength plus the decomposition (for explainability)."""
     z = mv_zscores(teams)
     out = {}
@@ -39,12 +40,14 @@ def team_strengths(teams: list[dict], elo: dict[str, float],
                                  -FORM_CAP, FORM_CAP))
         inj_adj = -INJURY_ELO_PER_IMPORTANCE * injury_importance_out.get(name, 0.0)
         man_adj = (manual_adj or {}).get(name, 0.0)
+        cf_adj = (club_form or {}).get(name, 0.0)      # current club xG/form
         out[name] = {
             "elo": round(base, 1),
             "mv_adj": round(mv_adj, 1),
             "form_adj": round(form_adj, 1),
             "injury_adj": round(inj_adj, 1),
             "manual_adj": round(man_adj, 1),
-            "strength": round(base + mv_adj + form_adj + inj_adj + man_adj, 1),
+            "club_form_adj": round(cf_adj, 1),
+            "strength": round(base + mv_adj + form_adj + inj_adj + man_adj + cf_adj, 1),
         }
     return out

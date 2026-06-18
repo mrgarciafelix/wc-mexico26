@@ -8,6 +8,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from . import db as dbm
+from . import playerform
 from . import wiki
 from .config import (ELO_HOME_ADV, HOST_CITY_COUNTRY, SEED, WIKI_MAIN,
                      canonical)
@@ -124,7 +125,14 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
 
     teams = dbm.teams_list(con)
     elo, form, wc_delta = current_elo_and_form(con)
-    strengths = team_strengths(teams, elo, form, injuries_out(con))
+    try:
+        club_form = playerform.team_club_form(con)
+        club_form.pop("_coverage", None)
+    except Exception as e:
+        dbm.add_event(con, "warning", None, f"club-form unavailable: {e}")
+        club_form = {}
+    strengths = team_strengths(teams, elo, form, injuries_out(con),
+                               club_form=club_form)
     matches = dbm.matches_for_sim(con)
     n_sims = int(dbm.get_setting(con, "n_sims", "20000"))
     res = run_simulation(teams, matches, alloc(),
@@ -142,10 +150,12 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
         s = strengths[team]
         strength_rows.append((run_id, team, s["elo"], s["mv_adj"],
                               s["form_adj"], s["injury_adj"], s["manual_adj"],
-                              s["strength"]))
+                              s["club_form_adj"], s["strength"]))
     con.executemany("INSERT INTO probs VALUES (?,?,?,?)", prob_rows)
-    con.executemany("INSERT INTO strengths VALUES (?,?,?,?,?,?,?,?)",
-                    strength_rows)
+    con.executemany(
+        "INSERT INTO strengths (run_id, team, elo, mv_adj, form_adj, injury_adj, "
+        "manual_adj, club_form_adj, strength) VALUES (?,?,?,?,?,?,?,?,?)",
+        strength_rows)
     con.commit()
     return {"run_id": run_id, "changes": changes, "n_sims": n_sims,
             "wc_elo_delta": wc_delta}

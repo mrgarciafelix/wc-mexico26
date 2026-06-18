@@ -252,6 +252,17 @@ nav#tabs button.active span { filter: none; }
 .trow .dl { font-family: var(--mono); font-size: 11px; width: 52px; text-align: right; }
 .up { color: var(--green-bright); } .down { color: var(--red); } .flat { color: var(--faint); }
 
+.titem .trow { cursor: pointer; }
+.tdetail { background: var(--panel2); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 11px 11px; padding: 10px 12px; margin: -6px 0 4px; }
+.sb-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 7px;
+  padding: 5px 9px; font-size: 11px; display: flex; gap: 6px; align-items: baseline; }
+.sb-chip span { color: var(--muted); }
+.sb-chip b { font-family: var(--mono); font-weight: 700; }
+.sb-tot { color: var(--muted); font-size: 10.5px; margin-top: 8px; line-height: 1.4; }
+.sb-tot b { color: var(--text); font-family: var(--mono); }
+
 #movers-strip { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
 #movers-strip::-webkit-scrollbar { display: none; }
 .mvr { flex: 0 0 auto; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
