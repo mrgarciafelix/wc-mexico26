@@ -52,9 +52,13 @@ def score_matrix(lh: float, la: float, draw_boost: float | None = None) -> np.nd
     return m / m.sum()
 
 
-def outcome_probs(d_eff: float, draw_boost: float | None = None) -> dict:
-    """Analytic 1X2 + common side markets for a single match."""
+def outcome_probs(d_eff: float, draw_boost: float | None = None,
+                  goals_mult: float = 1.0) -> dict:
+    """Analytic 1X2 + common side markets for a single match.
+    goals_mult opens/closes the game (e.g. urgency → more shots/goals)."""
     lh, la = lambdas(d_eff)
+    if goals_mult != 1.0:
+        lh, la = lh * goals_mult, la * goals_mult
     m = score_matrix(lh, la, draw_boost)
     home = float(np.tril(m, -1).sum())
     away = float(np.triu(m, 1).sum())

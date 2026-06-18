@@ -22,6 +22,7 @@ from .config import (FRONTEND, HOST_CITY_COUNTRY, WC_HOST_ELO_BONUS)
 from . import odds_api
 from . import predictions as predmod
 from . import props as propmod
+from . import urgency
 from .match_model import MAX_GOALS, outcome_probs, params
 from .optimizer import optimize
 
@@ -100,8 +101,9 @@ def latest_strengths(con, run_id: int) -> dict[str, dict]:
         "SELECT * FROM strengths WHERE run_id=?", (run_id,))}
 
 
-def match_forecast(m, strengths) -> dict | None:
-    """Analytic 1X2 for a fixture with both teams known and unplayed."""
+def match_forecast(m, strengths, urg=None) -> dict | None:
+    """Analytic 1X2 for a fixture with both teams known and unplayed.
+    urg = (u_home, u_away) group-stage urgency, applied when present."""
     if not (m["home_team"] and m["away_team"]) or m["home_score"] is not None:
         return None
     sh = strengths.get(m["home_team"])
@@ -112,7 +114,10 @@ def match_forecast(m, strengths) -> dict | None:
     d = (sh["strength"] - sa["strength"]
          + (WC_HOST_ELO_BONUS if host == m["home_team"] else 0)
          - (WC_HOST_ELO_BONUS if host == m["away_team"] else 0))
-    return outcome_probs(d)
+    gm = 1.0
+    if urg:
+        d, gm = urgency.apply(d, urg[0], urg[1])
+    return outcome_probs(d, goals_mult=gm)
 
 
 def model_prob_for(con, market: str, selection: str) -> float | None:
@@ -439,13 +444,14 @@ def matches():
     try:
         runs = dbm.latest_runs(con, 1)
         strengths = latest_strengths(con, runs[0]["id"]) if runs else {}
+        urg = urgency.match_urgency(con)
         out = []
         for m in con.execute("SELECT * FROM matches ORDER BY number"):
             e = dict(m)
             e["home_label"] = m["home_team"] or slot_label(m["home_slot"])
             e["away_label"] = m["away_team"] or slot_label(m["away_slot"])
             e.pop("home_slot", None); e.pop("away_slot", None)
-            fc = match_forecast(m, strengths)
+            fc = match_forecast(m, strengths, urg.get(m["number"]))
             if fc:
                 e["forecast"] = {k: round(v, 4) for k, v in fc.items()}
             out.append(e)

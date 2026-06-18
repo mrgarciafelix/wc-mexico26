@@ -42,11 +42,16 @@ def _dump_file(con) -> None:
         pass
 
 
-def _forecast(sh: float, sa: float, city: str, home: str, away: str) -> dict:
+def _forecast(sh: float, sa: float, city: str, home: str, away: str,
+              urg=None) -> dict:
+    from . import urgency
     host = HOST_CITY_COUNTRY.get(city)
     d = (sh - sa + (WC_HOST_ELO_BONUS if host == home else 0)
          - (WC_HOST_ELO_BONUS if host == away else 0))
-    return outcome_probs(d)
+    gm = 1.0
+    if urg:
+        d, gm = urgency.apply(d, urg[0], urg[1])
+    return outcome_probs(d, goals_mult=gm)
 
 
 def _result(h: int, a: int) -> str:
@@ -54,11 +59,13 @@ def _result(h: int, a: int) -> str:
 
 
 def ensure_predictions(con) -> None:
+    from . import urgency
     _load_file(con)                       # seed from the committed track record
     runs = con.execute("SELECT id, ts FROM runs ORDER BY ts").fetchall()
     if not runs:
         return
     latest = runs[-1]["id"]
+    urg_all = urgency.match_urgency(con)
     cache: dict[int, dict] = {}
 
     def strengths(run_id: int) -> dict:
@@ -99,7 +106,8 @@ def ensure_predictions(con) -> None:
         else:                                               # upcoming: refresh forecast
             st = strengths(latest)
             if home in st and away in st:
-                fc = _forecast(st[home], st[away], m["city"], home, away)
+                fc = _forecast(st[home], st[away], m["city"], home, away,
+                               urg_all.get(n))
                 con.execute(
                     "INSERT INTO predictions (match_number, ts, p_home, p_draw, "
                     "p_away, exp_home, exp_away) VALUES (?,?,?,?,?,?,?) "
