@@ -650,7 +650,30 @@ document.getElementById("title-list").addEventListener("click", e => {
 });
 
 /* ================= MATCHES tab ================= */
+function renderTrackRecord() {
+  const tr = S.track_record, acc = S.meta && S.meta.accuracy;
+  const el = document.getElementById("track-record");
+  if (!el) return;
+  if (!tr || !tr.n) { el.innerHTML = ""; return; }
+  let note = "";
+  if (acc) note = tr.n < 25
+    ? "Small sample so far — expect noise; the 4,448-game historical backtest is the more reliable read."
+    : (tr.accuracy - acc.accuracy < -0.05
+        ? "Running below its historical baseline — the misses are worth investigating."
+        : "In line with its historical accuracy.");
+  el.innerHTML = `<div class="acc-card">
+    <div class="acc-head">🎯 Model's WC track record <span class="hint">pre-match picks vs results · ${tr.n} games</span></div>
+    <div class="acc-grid">
+      <div><b>${tr.correct}/${tr.n}</b><span>correct<br>(${(tr.accuracy*100).toFixed(0)}%)</span></div>
+      <div><b>${tr.logloss}</b><span>log-loss<br>(low=good)</span></div>
+      <div><b>${acc?(acc.accuracy*100).toFixed(0)+"%":"—"}</b><span>historical<br>baseline</span></div>
+    </div>
+    <p class="micro">Uncheck "upcoming only" below to see every pick vs result. ${note}</p>
+  </div>`;
+}
 function renderMatches() {
+  renderTrackRecord();
+  const pred = {}; (S.track_record && S.track_record.items || []).forEach(it => pred[it.match] = it);
   const up = document.getElementById("matches-upcoming").checked;
   let last = "";
   const ms = S.matches
@@ -675,6 +698,13 @@ function renderMatches() {
           <span class="o ${fc.draw===mx?"lead":""}">Draw ${pct(fc.draw)}</span>
           <span class="o ${fc.away===mx?"lead":""}"><b>${esc(code(m.away_label))}</b> ${pct(fc.away)}</span></div>`;
     }
+    let predHtml = "";
+    const pr = played && pred[m.number];
+    if (pr) {
+      const pmax = Math.max(pr.p_home, pr.p_draw, pr.p_away);
+      const pickLbl = pr.pick === "draw" ? "Draw" : code(pr.pick === "home" ? m.home_label : m.away_label);
+      predHtml = `<div class="mr-pred ${pr.hit?"ok":"miss"}">model called <b>${esc(pickLbl)}</b> ${(pmax*100).toFixed(0)}% · ${pr.hit?"✓ hit":"✗ miss"}</div>`;
+    }
     return hdr + `<div class="mrow ${played?"done":""}">
       <div class="mr-top"><span class="mr-tag">M${m.number} · ${esc(m.stage)}${m.group_letter?" "+m.group_letter:""}</span>
         <span class="mr-when">${score}</span></div>
@@ -682,7 +712,7 @@ function renderMatches() {
         <span class="mr-team h"><span class="flag">${flag(m.home_label)}</span> ${esc(m.home_label)}</span>
         <span class="mr-vs">${played?"":"vs"}</span>
         <span class="mr-team a">${esc(m.away_label)} <span class="flag">${flag(m.away_label)}</span></span></div>
-      ${viz}</div>`;
+      ${viz}${predHtml}</div>`;
   }).join("") || `<div class="empty">nothing to show</div>`;
 }
 document.getElementById("matches-upcoming").addEventListener("change", renderMatches);

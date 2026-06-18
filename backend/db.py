@@ -41,6 +41,10 @@ CREATE TABLE IF NOT EXISTS bets (
   decimal_odds REAL, stake REAL, model_p REAL, status TEXT DEFAULT 'open',
   pnl REAL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS predictions (
+  match_number INTEGER PRIMARY KEY, ts TEXT,
+  p_home REAL, p_draw REAL, p_away REAL, exp_home REAL, exp_away REAL,
+  result TEXT, home_score INTEGER, away_score INTEGER, settled_ts TEXT);
 """
 
 

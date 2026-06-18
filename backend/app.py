@@ -20,6 +20,7 @@ from . import updater
 from .betting import evaluate
 from .config import (FRONTEND, HOST_CITY_COUNTRY, WC_HOST_ELO_BONUS)
 from . import odds_api
+from . import predictions as predmod
 from . import props as propmod
 from .match_model import MAX_GOALS, outcome_probs, params
 from .optimizer import optimize
@@ -323,6 +324,10 @@ def build_snapshot() -> dict:
                 "baseline_logloss", "logloss_edge_pct", "ece", "window")}
         except Exception:
             accuracy = None
+        try:
+            track_record = predmod.settled(con)
+        except Exception:
+            track_record = {"n": 0, "items": []}
 
         # plan candidates straight from the catalog (same as the frontend)
         by_key = {mk["key"]: mk for mk in markets}
@@ -355,6 +360,7 @@ def build_snapshot() -> dict:
         "teams": ov["teams"], "groups": gr, "matches": ms,
         "events": ov["events"], "movers": mv,
         "markets": markets, "sample_odds": sample, "plan": plan,
+        "track_record": track_record,
     }
 
 

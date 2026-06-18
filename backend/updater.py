@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 from . import db as dbm
 from . import playerform
+from . import predictions
 from . import wiki
 from .config import (ELO_HOME_ADV, HOST_CITY_COUNTRY, SEED, WIKI_MAIN,
                      canonical)
@@ -157,5 +158,9 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
         "manual_adj, club_form_adj, strength) VALUES (?,?,?,?,?,?,?,?,?)",
         strength_rows)
     con.commit()
+    try:
+        predictions.ensure_predictions(con)     # log pre-match forecasts + settle
+    except Exception as e:
+        dbm.add_event(con, "warning", None, f"prediction log failed: {e}")
     return {"run_id": run_id, "changes": changes, "n_sims": n_sims,
             "wc_elo_delta": wc_delta}
