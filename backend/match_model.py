@@ -32,7 +32,7 @@ def lambdas(d_eff: float) -> tuple[float, float]:
     return math.exp(p["a"] + p["b"] * d), math.exp(p["a"] - p["b"] * d)
 
 
-def score_matrix(lh: float, la: float) -> np.ndarray:
+def score_matrix(lh: float, la: float, draw_boost: float | None = None) -> np.ndarray:
     g = np.arange(MAX_GOALS + 1)
     ph = np.exp(-lh) * lh ** g / np.array([math.factorial(int(i)) for i in g])
     pa = np.exp(-la) * la ** g / np.array([math.factorial(int(i)) for i in g])
@@ -43,13 +43,19 @@ def score_matrix(lh: float, la: float) -> np.ndarray:
     m[0, 1] *= 1 + lh * rho
     m[1, 0] *= 1 + la * rho
     m[1, 1] *= 1 - rho
+    # draw inflation: Poisson under-predicts draws; nudge the diagonal (calibrated
+    # on the 4,448-game backtest, see scripts/tune_draw.py)
+    db = params().get("draw_boost", 0.0) if draw_boost is None else draw_boost
+    if db:
+        idx = np.arange(m.shape[0])
+        m[idx, idx] *= 1 + db
     return m / m.sum()
 
 
-def outcome_probs(d_eff: float) -> dict:
+def outcome_probs(d_eff: float, draw_boost: float | None = None) -> dict:
     """Analytic 1X2 + common side markets for a single match."""
     lh, la = lambdas(d_eff)
-    m = score_matrix(lh, la)
+    m = score_matrix(lh, la, draw_boost)
     home = float(np.tril(m, -1).sum())
     away = float(np.triu(m, 1).sum())
     draw = float(np.trace(m))
