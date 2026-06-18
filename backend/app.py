@@ -18,7 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from . import db as dbm
 from . import updater
 from .betting import evaluate
-from .config import (FRONTEND, HOST_CITY_COUNTRY, WC_HOST_ELO_BONUS)
+from .config import (FRONTEND, HOST_CITY_COUNTRY, WC_CONFIDENCE,
+                     WC_HOST_ELO_BONUS)
 from . import odds_api
 from . import predictions as predmod
 from . import props as propmod
@@ -113,7 +114,7 @@ def match_forecast(m, strengths, urg=None) -> dict | None:
     host = HOST_CITY_COUNTRY.get(m["city"])
     d = (sh["strength"] - sa["strength"]
          + (WC_HOST_ELO_BONUS if host == m["home_team"] else 0)
-         - (WC_HOST_ELO_BONUS if host == m["away_team"] else 0))
+         - (WC_HOST_ELO_BONUS if host == m["away_team"] else 0)) * WC_CONFIDENCE
     gm = 1.0
     if urg:
         d, gm = urgency.apply(d, urg[0], urg[1])

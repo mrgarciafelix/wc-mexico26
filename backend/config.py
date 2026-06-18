@@ -60,6 +60,11 @@ FORM_CAP = 40.0
 INJURY_ELO_PER_IMPORTANCE = 60.0   # full-importance player (1.0) out -> -60 Elo
                                    # (~0.25 goals), scaled by player importance
 WC_HOST_ELO_BONUS = 80.0     # host playing in own country during the WC
+# World Cup matches are tighter/more random than the Elo gap implies (neutral
+# venues, elite teams, high stakes). Shrinking the skill gap improves match
+# log-loss on BOTH the 2022 WC backtest and the live 2026 games — see
+# scripts/evaluate.py. Kept modest (0.88) to avoid overfitting the small samples.
+WC_CONFIDENCE = 0.88
 
 # --- Simulation --------------------------------------------------------------
 N_SIMS = 50000

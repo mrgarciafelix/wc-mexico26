@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 
 from . import db as dbm
-from .config import DATA, HOST_CITY_COUNTRY, WC_HOST_ELO_BONUS
+from .config import DATA, HOST_CITY_COUNTRY, WC_CONFIDENCE, WC_HOST_ELO_BONUS
 from .match_model import outcome_probs
 
 PRED_FILE = DATA / "predictions.json"     # committed, so stateless CI persists it
@@ -47,7 +47,7 @@ def _forecast(sh: float, sa: float, city: str, home: str, away: str,
     from . import urgency
     host = HOST_CITY_COUNTRY.get(city)
     d = (sh - sa + (WC_HOST_ELO_BONUS if host == home else 0)
-         - (WC_HOST_ELO_BONUS if host == away else 0))
+         - (WC_HOST_ELO_BONUS if host == away else 0)) * WC_CONFIDENCE
     gm = 1.0
     if urg:
         d, gm = urgency.apply(d, urg[0], urg[1])
