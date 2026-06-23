@@ -20,49 +20,27 @@
 </header>
 
 <main>
-  <!-- ============ TODAY ============ -->
+  <!-- ============ TODAY · DAILY CARD (zero input) ============ -->
   <section id="tab-today" class="tab active">
-    <div class="ctrl-card">
-      <div class="ctrl">
-        <label>Bankroll
-          <span class="money"><span>$</span><input id="t-bankroll" type="number" inputmode="decimal" min="0" step="10"></span>
-        </label>
-        <label>Risk
-          <select id="t-kelly">
-            <option value="0.1">Cautious (⅒ Kelly)</option>
-            <option value="0.25">Balanced (¼ Kelly)</option>
-            <option value="0.5">Aggressive (½ Kelly)</option>
-            <option value="1">Max (full Kelly)</option>
-          </select>
-        </label>
-      </div>
-      <p class="micro" id="today-sub"></p>
+    <div class="card-banner">
+      <div class="cb-title">Your card for <span id="card-date">today</span></div>
+      <div class="cb-sub" id="card-sub">Bet each ticket as shown — no inputs, no decisions.</div>
     </div>
 
-    <div class="summary" id="today-summary"></div>
+    <div class="summary" id="card-hero"></div>
 
-    <h2 class="sec">🔥 Today's card <span class="sec-sub" id="today-date"></span></h2>
-    <div id="today-matches" class="stack"></div>
+    <h2 class="sec">🎯 The plays <span class="sec-sub">one pick per game · flat $10</span></h2>
+    <div id="card-games" class="stack"></div>
 
-    <h2 class="sec">🧩 Same-game parlays <span class="sec-sub">best combo per match · correlation-aware</span></h2>
-    <div id="today-sgp" class="stack"></div>
+    <h2 class="sec">🎟️ Parlay of the Day <span class="sec-sub">one $10 ticket, all of today</span></h2>
+    <div id="card-day" class="stack"></div>
 
-    <h2 class="sec">⚽ Player props <span class="sec-sub">parlay legs · estimated from xG</span></h2>
-    <div id="today-props" class="stack"></div>
-
-    <h2 class="sec">🎟️ Cross-match parlay <span class="sec-sub">press today's wins into one ticket</span></h2>
-    <div id="today-acca" class="stack"></div>
+    <h2 class="sec">🛡️ Safe Parlay <span class="sec-sub">strongest favourites only</span></h2>
+    <div id="card-safe" class="stack"></div>
 
     <div id="model-accuracy"></div>
 
-    <details class="browse" id="today-how">
-      <summary>How "build from your wins" actually works</summary>
-      <p class="micro">Each stake is a slice of your <b>current</b> bankroll (Kelly). Win and tonight's
-      result makes tomorrow's slice bigger; lose and it shrinks — automatic compounding that can't bust you.
-      Unlike a roulette system, this only grows money because the bets are <b>positive-EV</b>: the model's
-      probability beats the bookmaker's price. The singles compound fastest; the "let it ride" parlay trades
-      growth for a shot at a big day. Bet today's card → it settles tonight → update your bankroll above → repeat.</p>
-    </details>
+    <p class="micro" id="card-note"></p>
   </section>
 
   <!-- ============ VALUE BOARD ============ -->

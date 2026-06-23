@@ -288,37 +288,65 @@ function todayCandidates(slate) {
   return S.markets.filter(m => m.match_no != null && nos.has(m.match_no) && ODDS[m.key] > 1)
     .map(m => ({...m, decimal_odds: ODDS[m.key]}));
 }
-function renderToday() {
-  const slate = todaySlate();
-  if (!slate) {
-    document.getElementById("today-matches").innerHTML = `<div class="empty">No upcoming matches in the data.</div>`;
-    document.getElementById("today-summary").innerHTML = "";
-    document.getElementById("today-acca").innerHTML = ""; return;
+function renderToday() {                       // zero-input DAILY CARD (S.daily_card)
+  const c = S.daily_card, g = id => document.getElementById(id);
+  if (!c || !c.games || !c.games.length) {
+    g("card-games").innerHTML = `<div class="empty">No upcoming matches right now — check back before the next match day.</div>`;
+    ["card-hero","card-day","card-safe"].forEach(i => g(i).innerHTML = "");
+    g("card-note").innerHTML = ""; renderAccuracy(); return;
   }
-  const plan = optimize(todayCandidates(slate), BANKROLL, KELLY);
-  const matchSingles = plan.singles.filter(s => s.kind === "match");
-  const pickBy = {}; matchSingles.forEach(s => pickBy[s.match_no] = s);
-  const stake = Math.round(matchSingles.reduce((a,x)=>a+x.stake,0)*100)/100;
-  const expP = Math.round(matchSingles.reduce((a,x)=>a+x.exp_profit,0)*100)/100;
-  const bestCase = Math.round(matchSingles.reduce((a,x) => a + x.stake*(x.decimal_odds-1), 0)*100)/100;
-  document.getElementById("today-summary").innerHTML = [
-    ["Today's picks", matchSingles.length, "settle tonight", ""],
-    ["Stake", money(stake), `${(KELLY*100)|0}% Kelly`, ""],
-    ["Exp. profit", money(expP), "on average", "good"],
-    ["If all win", "+"+money(bestCase), `bankroll → ${money(BANKROLL+bestCase)}`, "good"],
-  ].map(([k,v,n,c]) => `<div class="stat"><div class="k">${k}</div>
-    <div class="v ${c}">${v}</div><div class="note">${n}</div></div>`).join("");
-  document.getElementById("today-date").textContent = (slate.isToday ? "TODAY · " : "") + slate.day.toUpperCase();
-  document.getElementById("today-matches").innerHTML =
-    slate.matches.map(m => todayMatchCard(m, pickBy[m.number])).join("");
-  renderSGP(slate);
-  renderTodayProps(slate);
+  const s = c.summary || {};
+  g("card-date").textContent = cardDate(c.slate);
+  g("card-sub").textContent = s.live_odds
+    ? "Real ~20-book odds. Bet each ticket exactly as shown — flat $10, no inputs."
+    : "Model prices (no live book line yet). Bet each ticket as shown — flat $10.";
+  g("card-hero").innerHTML = [
+    ["Games today", c.games.length, "on the card", ""],
+    ["Per ticket", "$"+(c.stake|0), "flat — no Kelly", ""],
+    ["Value plays", s.n_value||0, (s.n_value? "beat the book ✓":"none beat the book"), s.n_value?"good":""],
+    ["Odds", s.live_odds?"LIVE":"MODEL", s.live_odds?"~20 books":"fair price", s.live_odds?"good":""],
+  ].map(([k,v,n,cl]) => `<div class="stat"><div class="k">${k}</div>
+    <div class="v ${cl}">${v}</div><div class="note">${n}</div></div>`).join("");
+  g("card-games").innerHTML = c.games.map(cardGame).join("");
+  g("card-day").innerHTML = c.day_parlay ? cardParlay(c.day_parlay)
+    : `<div class="empty">Need at least two games for a day parlay.</div>`;
+  g("card-safe").innerHTML = c.safe_parlay ? cardParlay(c.safe_parlay)
+    : `<div class="empty">No strong-enough favourites today for a safe parlay.</div>`;
   renderAccuracy();
-  document.getElementById("today-acca").innerHTML = plan.parlays.length ? parlayCard(plan.parlays[0], 0)
-    : `<div class="empty">No +EV multi-match parlay from today's card at these odds.</div>`;
-  document.getElementById("today-sub").textContent = slate.isToday
-    ? "Bets that settle tonight — win, update your bankroll, repeat tomorrow."
-    : "Next match day — these settle the same day, so you can iterate fast.";
+  g("card-note").innerHTML = esc(s.note || "");
+}
+function cardDate(iso) {
+  if (!iso) return "today";
+  return new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,
+    {weekday:"long", month:"short", day:"numeric"});
+}
+function c0(n){ return (Math.round(n*100)/100).toString().replace(/\.0+$/,""); }
+function cardGame(g) {
+  const pk = g.pick, b = g.booster;
+  const vb = pk.value ? `<span class="badge val">VALUE ✓</span>` : "";
+  const ob = pk.live_odds ? `<span class="badge live">LIVE</span>` : `<span class="badge model">MODEL</span>`;
+  return `<div class="play${pk.value?" is-value":""}">
+    <div class="play-head"><span>M${g.match_no} · ${esc(g.stage)} · ${clockUTC(g.kickoff)}</span>${ob}</div>
+    <div class="play-teams">${flag(g.home)} ${esc(code(g.home))} <span class="vs">v</span> ${esc(code(g.away))} ${flag(g.away)}</div>
+    <div class="play-row">
+      <div class="play-bet"><div class="pb-main">${esc(pk.text)} ${vb}</div>
+        <div class="pb-sub">model ${pct(pk.model_p)} · pays ${pk.odds}</div></div>
+      <div class="play-stake"><span>BET</span><b>$${c0(pk.stake)}</b><span>win $${pk.to_return}</span></div>
+    </div>
+    ${b ? `<div class="play-boost"><span class="bt">PARLAY</span>
+      <span class="bl">${b.legs.map(esc).join(" <i>+</i> ")}</span>
+      <span class="bo">${pct(b.model_p)} · ~${b.fair_odds} → $${b.to_return}</span></div>` : ""}
+  </div>`;
+}
+function cardParlay(p) {
+  return `<div class="bigparlay${p.value?" is-value":""}">
+    <div class="bp-top"><div><div class="bp-lbl">${esc(p.label)}</div>
+      <div class="bp-sub">${p.legs.length} legs · model ${pct(p.model_p)} to land</div></div>
+      <div class="bp-ret"><div class="v">$${p.to_return}</div><div class="k">$${c0(p.stake)} returns</div></div></div>
+    ${p.legs.map(l => `<div class="bp-leg"><span>${flag(l.home)} ${esc(l.text)}</span><b>${l.odds}</b></div>`).join("")}
+    <div class="bp-foot">Combined odds <b>${p.combined_odds}</b> · ${p.value
+      ? `<span class="up">model edge ✓</span>` : `<span class="flat">upside ticket — no model edge</span>`}</div>
+  </div>`;
 }
 function todayMatchCard(m, pick) {
   const fc = m.forecast || {};
@@ -606,14 +634,23 @@ let titleMetric = "champion";
 function strengthBreakdown(s) {
   if (!s) return "";
   const adj = (k, v) => `<div class="sb-chip"><span>${k}</span><b class="${v>0?"up":v<0?"down":""}">${v>0?"+":""}${v}</b></div>`;
+  // Style residuals are goal-shape multipliers, not Elo points — show on a x100
+  // scale: attack + = scores above its rating; solidity + = concedes below it.
+  const atk = Math.round((s.style_attack ?? 0) * 100);
+  const sol = Math.round(-(s.style_defense ?? 0) * 100);
+  const styleRow = (s.style_attack != null || s.style_defense != null)
+    ? `<div class="sb-row">${adj("Attack style", atk)}${adj("Solidity", sol)}</div>` : "";
   return `<div class="tdetail hidden">
     <div class="sb-row">
       <div class="sb-chip"><span>Elo</span><b>${Math.round(s.elo)}</b></div>
       ${adj("Market value", s.mv_adj)}${adj("Intl form", s.form_adj)}
       ${adj("Club form", s.club_form_adj ?? 0)}${adj("Injuries", s.injury_adj)}
     </div>
+    ${styleRow}
     <div class="sb-tot">Strength <b>${Math.round(s.strength)}</b> — higher is stronger.
-      "Club form" = squad's current club xG + minutes (live). Tap to close.</div></div>`;
+      <b>Style</b> rides separately: attack = goals vs what the rating predicts,
+      solidity = how much less it concedes; the engine applies it as a matchup
+      (your attack vs their defence). Tap to close.</div></div>`;
 }
 function renderTitle() {
   const rows = [...S.teams].sort((a,b) => b.probs[titleMetric] - a.probs[titleMetric]);
