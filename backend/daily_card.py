@@ -87,11 +87,11 @@ def _scorer_leg(no, pr, side, share, team) -> dict:
     p = pr["props"]["anytime"]
     name = _clean_name(pr["name"])
     return {"key": f"m{no}:scorer:{pr['id']}", "kind": "scorer", "match_no": no,
-            "text": f"{name} anytime", "model_p": round(p, 4),
+            "text": f"{name} to score anytime", "model_p": round(p, 4),
             "odds": round(1.0 / p, 2) if p > 0 else 0.0, "live_odds": False,
             "value": False, "family": f"prop:{pr['id']}:goals",
             "share": share, "n_plus": 1, "scorer_side": side,
-            "player": pr["name"], "team": team, "verifiable": False}
+            "player": name, "team": team, "verifiable": False}
 
 
 def _gk_leg(no, gk, team) -> dict:

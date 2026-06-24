@@ -1,7 +1,10 @@
 /* WC Mexico 26 — Edge Finder · mobile-first sportsbook UI */
 :root {
-  /* surfaces — a cooler, deeper near-black with layered elevation */
-  --bg: #070a11; --bg2: #0b0f18;
+  /* surfaces — a deep, near-black canvas for the glass to sit on */
+  --bg: #04060c; --bg2: #080b14;
+  /* glass surface tint reused across cards */
+  --glass-hi: rgba(255,255,255,.055); --glass-lo: rgba(255,255,255,.015);
+  --hair: rgba(255,255,255,.08); --hair-soft: rgba(255,255,255,.05);
   --panel: #111726; --panel2: #171e30; --panel3: #1d2638;
   --border: #243049; --border2: #2e3b58;
   /* text ramp */
@@ -29,11 +32,12 @@ body {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   padding-bottom: calc(72px + var(--safe-b));
-  /* premium backdrop: two soft accent auras over a deep base */
+  /* premium backdrop: layered accent auras + a deep vignette over near-black */
   background:
-    radial-gradient(1100px 620px at 78% -8%, rgba(31,206,134,.10), transparent 60%),
-    radial-gradient(900px 600px at 12% 4%, rgba(88,168,255,.07), transparent 55%),
-    var(--bg);
+    radial-gradient(1200px 680px at 82% -10%, rgba(31,206,134,.16), transparent 58%),
+    radial-gradient(1000px 700px at 6% 2%, rgba(88,168,255,.10), transparent 55%),
+    radial-gradient(900px 900px at 50% 120%, rgba(189,151,255,.10), transparent 60%),
+    linear-gradient(180deg, #070b14, var(--bg) 40%);
   background-attachment: fixed;
 }
 h1, h2, h3 { margin: 0; }
@@ -588,3 +592,128 @@ nav#tabs button:active span { transform: scale(.9); }
 .age { font-family: var(--mono); }
 .age.fresh { color: var(--green-bright); }
 .age.stale { color: var(--gold); }
+
+/* ============================================================================
+   TODAY · redesigned glass betslip (graphical, relaxed — no table look)
+   ========================================================================== */
+.card-banner {
+  background:
+    radial-gradient(130% 150% at 100% 0%, rgba(31,206,134,.20), transparent 52%),
+    linear-gradient(165deg, var(--glass-hi), var(--glass-lo) 40%, rgba(8,11,20,.5));
+  border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  border-radius: 20px; padding: 18px 20px; box-shadow: var(--sh-3);
+}
+.cb-title { font-size: 21px; }
+
+/* hero summary → glass tiles */
+.summary { gap: 10px; }
+.stat {
+  background: linear-gradient(165deg, var(--glass-hi), var(--glass-lo));
+  border: 1px solid var(--hair); border-radius: 16px; padding: 13px 12px;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: var(--sh-2);
+}
+.stat .v { font-size: 22px; }
+
+/* section headings — quieter, more editorial */
+.sec { font-size: 12px; letter-spacing: 1.4px; color: var(--muted); margin: 26px 4px 12px; }
+.sec-sub { color: var(--faint); }
+
+/* confidence ring */
+.ring { width: 46px; height: 46px; flex: 0 0 auto; }
+.ring .rbg { fill: none; stroke: rgba(255,255,255,.09); stroke-width: 4; }
+.ring .rfg { fill: none; stroke: var(--green-bright); stroke-width: 4; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: center;
+  transition: stroke-dashoffset .7s var(--ease); filter: drop-shadow(0 0 5px rgba(61,240,176,.5)); }
+.ring.lo .rfg { stroke: var(--gold); filter: drop-shadow(0 0 5px rgba(255,194,61,.45)); }
+.ring .rtx { fill: var(--text); font-size: 13px; font-weight: 800; text-anchor: middle;
+  font-family: var(--mono); }
+
+/* the betslip card */
+.slip {
+  position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 14px;
+  background: linear-gradient(165deg, rgba(31,206,134,.05), var(--glass-lo) 32%, rgba(8,11,20,.5));
+  border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25); backdrop-filter: blur(16px) saturate(1.25);
+  box-shadow: var(--sh-3);
+}
+.slip.is-value { border-color: rgba(61,240,176,.4); box-shadow: var(--glow), var(--sh-3); }
+.slip-head { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 16px 18px 13px; }
+.slip-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.slip-lbl { font-size: 16px; font-weight: 800; letter-spacing: .2px; }
+.slip-meta { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.slip-meta .prop-dot { color: var(--purple); font-weight: 700; }
+.slip-ret { text-align: right; flex: 0 0 auto; }
+.slip-ret .rv { font-family: var(--mono); font-size: 25px; font-weight: 800; color: var(--gold);
+  text-shadow: 0 0 22px rgba(255,194,61,.35); line-height: 1; }
+.slip-ret .rv.ed { color: var(--green-bright); text-shadow: 0 0 22px rgba(61,240,176,.4); }
+.slip-ret .rk { font-size: 9.5px; color: var(--faint); text-transform: uppercase;
+  letter-spacing: .5px; margin-top: 5px; }
+
+.slip-legs { padding: 2px 12px 4px; }
+.leg { display: flex; align-items: center; gap: 12px; padding: 11px 6px;
+  border-top: 1px solid var(--hair-soft); }
+.leg:first-child { border-top: none; }
+.leg-txt { flex: 1; min-width: 0; }
+.leg-sub { font-weight: 700; font-size: 14.5px; display: flex; align-items: center; gap: 7px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leg-mkt { color: var(--muted); font-size: 12px; margin-top: 2px; display: flex;
+  align-items: center; gap: 6px; }
+.leg-mkt .mi { font-style: normal; filter: saturate(1.1); }
+
+/* avatars */
+.av { width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto; position: relative;
+  display: flex; align-items: center; justify-content: center; font-size: 19px; }
+.av.flagav { background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.16), rgba(255,255,255,.03));
+  border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 1px rgba(255,255,255,.12); }
+.av.tile { font-size: 17px; color: var(--blue);
+  background: linear-gradient(150deg, rgba(88,168,255,.22), rgba(88,168,255,.05));
+  border: 1px solid rgba(88,168,255,.28); }
+.av.mono { font-size: 13.5px; font-weight: 800; color: #06120c; letter-spacing: .3px;
+  background: linear-gradient(150deg, hsl(var(--h),72%,64%), hsl(calc(var(--h) + 38),72%,44%));
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 3px 9px -3px rgba(0,0,0,.6); }
+.av .fb { position: absolute; right: -3px; bottom: -3px; font-size: 11px; font-style: normal;
+  width: 18px; height: 18px; border-radius: 50%; background: #0a0e18;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.08); }
+
+/* odds pill (tap to edit) */
+.oddpill { flex: 0 0 auto; font-family: var(--mono); font-weight: 800; font-size: 15px;
+  color: var(--text); background: rgba(255,255,255,.05); border: 1px solid var(--hair);
+  border-radius: 12px; padding: 9px 13px; cursor: pointer; min-width: 58px; text-align: center;
+  font-variant-numeric: tabular-nums; transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+@media (hover:hover){ .oddpill:hover { border-color: var(--green); box-shadow: var(--ring); } }
+.oddpill.ed { color: var(--green-bright); border-color: rgba(61,240,176,.45);
+  background: rgba(31,206,134,.1); }
+.oddpill.editing { outline: none; }
+
+/* per-leg tag pills */
+.tg { font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: .5px;
+  padding: 2px 6px; border-radius: 999px; text-transform: uppercase; flex: 0 0 auto; }
+.tg.val { background: rgba(61,240,176,.18); color: var(--green-bright); }
+.tg.live { background: rgba(88,168,255,.16); color: var(--blue); }
+.tg.model { background: rgba(255,255,255,.06); color: var(--muted); }
+.tg.prop { background: rgba(189,151,255,.16); color: var(--purple); }
+
+.slip-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 12px 18px; font-size: 11.5px; color: var(--muted);
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.22)); border-top: 1px solid var(--hair-soft); }
+.slip-foot b { font-family: var(--mono); color: var(--text); }
+.reset-odds { color: var(--green-bright); cursor: pointer; text-decoration: underline dotted; }
+
+/* projection — glass with a green-chance ring */
+.proj2 { border-radius: 20px; padding: 16px 18px;
+  background: linear-gradient(165deg, rgba(88,168,255,.06), var(--glass-lo) 35%, rgba(8,11,20,.45));
+  border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--sh-2); }
+.proj2-top { display: flex; align-items: center; gap: 14px; }
+.proj2-h { font-size: 15px; font-weight: 800; }
+.proj2-s { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.proj2-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 14px; }
+.proj2-grid > div { text-align: center; padding: 11px 4px; border-radius: 14px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--hair-soft); }
+.proj2-grid span { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--muted); }
+.proj2-grid b { display: block; font-family: var(--mono); font-size: 16px; font-weight: 800; margin-top: 4px; }
+.proj2 .cc { margin-top: 13px; }

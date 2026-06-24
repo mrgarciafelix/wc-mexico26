@@ -323,52 +323,136 @@ function cardDate(iso) {
 }
 function c0(n){ return (Math.round(n*100)/100).toString().replace(/\.0+$/,""); }
 
+/* ---------- confidence ring (SVG) ---------- */
+function ring(p, cls) {
+  const r = 19, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(1, p)));
+  return `<svg class="ring ${cls||""}" viewBox="0 0 46 46" aria-hidden="true">
+    <circle class="rbg" cx="23" cy="23" r="${r}"/>
+    <circle class="rfg" cx="23" cy="23" r="${r}" stroke-dasharray="${c.toFixed(1)}"
+      stroke-dashoffset="${off.toFixed(1)}"/>
+    <text x="23" y="27" class="rtx">${Math.round(p*100)}</text></svg>`;
+}
+
+/* ---------- player / market visuals ---------- */
+function monogram(name) {
+  const parts = String(name||"").replace(/[^\p{L}\s.'-]/gu,"").trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] || "?";
+  const b = parts.length>1 ? parts[parts.length-1][0] : (parts[0]?.[1]||"");
+  return (a+b).toUpperCase();
+}
+function hueOf(s) { let h=0; for (const ch of String(s)) h=(h*31+ch.charCodeAt(0))%360; return h; }
+function avatar(l) {
+  if (l.kind === "result")
+    return `<span class="av flagav">${l.side==="draw" ? "🤝" : flag(l.team)}</span>`;
+  if (l.kind === "total") return `<span class="av tile">⚖︎</span>`;
+  const nm = l.player || l.text;
+  return `<span class="av mono" style="--h:${hueOf(nm)}">${esc(monogram(nm))}
+    <i class="fb">${flag(l.team)}</i></span>`;
+}
+const MKT_ICON = { goal:"⚽", scorer:"⚽", shots:"🎯", saves:"🧤" };
+function legSubject(l) {
+  if (l.kind === "result") return l.side==="draw" ? "Draw" : esc(code(l.team) || l.team);
+  if (l.kind === "total") return "Match goals";
+  return esc(l.player || l.text);
+}
+function legMarket(l) {
+  if (l.kind === "result") return l.side==="draw" ? "both teams share it" : "to win";
+  if (l.kind === "total") { const t=l.total||[]; return `${t[0]||""} ${t[1]||""} total goals`.trim(); }
+  if (l.kind === "scorer") return "to score anytime";
+  if (l.kind === "shots") return "2+ shots attempted";
+  if (l.kind === "saves") return "2+ saves";
+  return esc(l.text);
+}
+function legTagPill(l) {
+  if (l.value) return `<i class="tg val">value</i>`;
+  if (l.kind === "result") return l.live_odds ? `<i class="tg live">live</i>` : `<i class="tg model">model</i>`;
+  return `<i class="tg prop">prop</i>`;
+}
+
+/* ---------- editable leg odds (tap to enter your book's price) ---------- */
+const LEG_LS = "wc26_leg_odds_v1";
+function legOddsMap() { try { return JSON.parse(localStorage.getItem(LEG_LS)||"{}"); } catch { return {}; } }
+function legOdds(l) { const m = legOddsMap(); return (m[l.key] > 1) ? m[l.key] : l.odds; }
+function isEdited(l) { return legOddsMap()[l.key] > 1; }
+function setLegOdds(key, v) {
+  const m = legOddsMap();
+  if (v && v > 1) m[key] = Math.round(v*100)/100; else delete m[key];
+  localStorage.setItem(LEG_LS, JSON.stringify(m));
+}
+function resetLegOdds() { localStorage.removeItem(LEG_LS); renderToday(); }
+function parlayTotals(p) {
+  let O = 1; for (const l of p.legs) O *= legOdds(l);
+  return { odds: O, ret: p.stake*O, value: p.model_p*O > 1,
+           edited: p.legs.some(isEdited) };
+}
+
+function legRow(l) {
+  const o = legOdds(l);
+  return `<div class="leg">
+    ${avatar(l)}
+    <div class="leg-txt">
+      <div class="leg-sub">${legSubject(l)} ${legTagPill(l)}</div>
+      <div class="leg-mkt">${MKT_ICON[l.kind] ? `<i class="mi">${MKT_ICON[l.kind]}</i>` : ""}${legMarket(l)}</div>
+    </div>
+    <button class="oddpill${isEdited(l)?" ed":""}" data-legodds="${esc(l.key)}"
+      title="tap to enter your book's odds">${(+o).toFixed(2)}</button>
+  </div>`;
+}
+function cardParlay(p) {
+  const T = parlayTotals(p);
+  const foot = T.value
+    ? `<span class="up">▲ beats the price — model edge</span>`
+    : `<span class="flat">upside ticket · the vig rides on favourites</span>`;
+  return `<div class="slip${T.value?" is-value":""}">
+    <div class="slip-head">
+      <div class="slip-id">${ring(p.model_p, p.model_p>=0.5?"hi":"lo")}
+        <div><div class="slip-lbl">${esc(p.label)}</div>
+          <div class="slip-meta">${p.n_legs} legs · ${pct(p.model_p)} to land${p.has_props?` · <b class="prop-dot">incl. prop</b>`:""}</div></div>
+      </div>
+      <div class="slip-ret"><div class="rv${T.edited?" ed":""}">${money(T.ret)}</div>
+        <div class="rk">to return · $${c0(p.stake)} stake</div></div>
+    </div>
+    <div class="slip-legs">${p.legs.map(legRow).join("")}</div>
+    <div class="slip-foot"><span>Combined <b>${T.odds.toFixed(2)}</b>${
+      T.edited?` · <a class="reset-odds" onclick="resetLegOdds()">reset</a>`:""}</span>${foot}</div>
+  </div>`;
+}
 function projectionPanel(c) {
   const p = c.projection, cc = c.come_clean;
   if (!p) return "";
-  const grn = Math.round((p.p_green||0)*100);
+  const grn = (p.p_green||0);
+  const cells = [["Expected",p.exp_pnl],["Worst 5%",p.worst],["Realistic",p.realistic],["Best 95%",p.best]];
   const ccline = cc
-    ? `<div class="cc ${cc.covered?"ok":"warn"}">${cc.covered?"🟢":"🟠"} ${esc(cc.note)}</div>`
+    ? `<div class="cc ${cc.covered?"ok":"warn"}">${cc.covered?"✓":"!"} ${esc(cc.note)}</div>`
     : "";
-  return `<div class="proj">
-    <div class="proj-grid">
-      <div><span>Expected</span><b class="${p.exp_pnl>=0?"up":"down"}">${money(p.exp_pnl)}</b></div>
-      <div><span>Worst (5%)</span><b class="down">${money(p.worst)}</b></div>
-      <div><span>Realistic</span><b class="${p.realistic>=0?"up":"down"}">${money(p.realistic)}</b></div>
-      <div><span>Best (95%)</span><b class="up">${money(p.best)}</b></div>
+  return `<div class="proj2">
+    <div class="proj2-top">${ring(grn, grn>=0.5?"hi":"lo")}
+      <div><div class="proj2-h">Day outlook</div>
+        <div class="proj2-s">${Math.round(grn*100)}% chance the day finishes green · ${(p.sims||0).toLocaleString()} simulations</div></div>
     </div>
-    <div class="proj-bar"><i style="width:${grn}%"></i></div>
-    <div class="proj-cap">${grn}% model chance the day finishes green · ${p.sims.toLocaleString()} sims</div>
+    <div class="proj2-grid">${cells.map(([k,v]) =>
+      `<div><span>${k}</span><b class="${v>=0?"up":"down"}">${money(v)}</b></div>`).join("")}</div>
     ${ccline}
   </div>`;
 }
 
-function legTag(l) {
-  if (l.kind === "result") return l.live_odds
-    ? `<span class="lt live">LIVE</span>` : `<span class="lt model">MODEL</span>`;
-  if (l.kind === "scorer" || l.kind === "saves" || l.kind === "shots")
-    return `<span class="lt prop">PROP</span>`;
-  return `<span class="lt model">MODEL</span>`;
-}
-function legRow(l) {
-  const fl = l.kind === "result" ? `${flag(l.home)} `
-    : (l.team ? `${flag(l.team)} ` : "");
-  const vv = l.value ? `<span class="lt val">VALUE</span>` : "";
-  return `<div class="bp-leg"><span>${fl}${esc(l.text)} ${legTag(l)}${vv}</span>
-    <b>${(+l.odds).toFixed(2)}</b></div>`;
-}
-function cardParlay(p) {
-  const badge = p.value ? `<span class="badge val">VALUE ✓</span>`
-    : `<span class="badge ${p.live_odds?"live":"model"}">${p.live_odds?"PART LIVE":"MODEL"}</span>`;
-  return `<div class="bigparlay${p.value?" is-value":""}">
-    <div class="bp-top"><div><div class="bp-lbl">${esc(p.label)} ${badge}</div>
-      <div class="bp-sub">${p.n_legs} legs · model ${pct(p.model_p)} to land${p.has_props?" · incl. prop":""}</div></div>
-      <div class="bp-ret"><div class="v">$${p.to_return}</div><div class="k">$${c0(p.stake)} stake →</div></div></div>
-    ${p.legs.map(legRow).join("")}
-    <div class="bp-foot">Combined odds <b>${p.combined_odds}</b> · ${p.value
-      ? `<span class="up">model edge ✓</span>` : `<span class="flat">upside ticket — favourites are −EV</span>`}</div>
-  </div>`;
-}
+/* tap a leg's odds → inline input → recompute the slip (your book's price) */
+document.addEventListener("click", e => {
+  const b = e.target.closest(".oddpill[data-legodds]");
+  if (!b) return;
+  const key = b.dataset.legodds;
+  const inp = document.createElement("input");
+  inp.className = "oddpill ed editing"; inp.value = b.textContent.trim();
+  inp.inputMode = "decimal"; inp.setAttribute("aria-label", "your odds");
+  b.replaceWith(inp); inp.focus(); inp.select();
+  let done = false;
+  const commit = () => { if (done) return; done = true; setLegOdds(key, parseFloat(inp.value)); renderToday(); };
+  inp.addEventListener("blur", commit);
+  inp.addEventListener("keydown", ev => {
+    if (ev.key === "Enter") inp.blur();
+    else if (ev.key === "Escape") { done = true; renderToday(); }
+  });
+});
 
 function renderStakingRecord() {
   const el = document.getElementById("card-record"); if (!el) return;
