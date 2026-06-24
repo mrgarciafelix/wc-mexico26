@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS probs (
   PRIMARY KEY (run_id, team, metric));
 CREATE TABLE IF NOT EXISTS strengths (
   run_id INTEGER, team TEXT, elo REAL, mv_adj REAL, form_adj REAL,
-  injury_adj REAL, manual_adj REAL, club_form_adj REAL DEFAULT 0, strength REAL,
+  injury_adj REAL, manual_adj REAL, club_form_adj REAL DEFAULT 0,
+  style_attack REAL DEFAULT 0, style_defense REAL DEFAULT 0, strength REAL,
   PRIMARY KEY (run_id, team));
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, type TEXT, team TEXT,
@@ -45,6 +46,16 @@ CREATE TABLE IF NOT EXISTS predictions (
   match_number INTEGER PRIMARY KEY, ts TEXT,
   p_home REAL, p_draw REAL, p_away REAL, exp_home REAL, exp_away REAL,
   result TEXT, home_score INTEGER, away_score INTEGER, settled_ts TEXT);
+CREATE TABLE IF NOT EXISTS staking_plans (
+  slate_date TEXT, label TEXT, ts TEXT,
+  stake REAL, combined_odds REAL, model_p REAL, n_matches INTEGER,
+  legs TEXT, matches TEXT,
+  status TEXT DEFAULT 'open', pnl REAL, settled_ts TEXT,
+  PRIMARY KEY (slate_date, label));
+CREATE TABLE IF NOT EXISTS staking_days (
+  slate_date TEXT PRIMARY KEY, ts TEXT,
+  total_stake REAL, projection TEXT,
+  actual_pnl REAL, settled_ts TEXT);
 """
 
 
@@ -62,10 +73,11 @@ def connect() -> sqlite3.Connection:
 def init_db(con: sqlite3.Connection) -> bool:
     """Create schema; load seed data on first run. Returns True if seeded."""
     con.executescript(SCHEMA)
-    try:                                   # migrate older DBs: add club_form_adj
-        con.execute("ALTER TABLE strengths ADD COLUMN club_form_adj REAL DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
+    for _col in ("club_form_adj", "style_attack", "style_defense"):
+        try:                               # migrate older DBs: add newer columns
+            con.execute(f"ALTER TABLE strengths ADD COLUMN {_col} REAL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
     if con.execute("SELECT COUNT(*) c FROM teams").fetchone()["c"]:
         return False
     teams = json.loads((SEED / "teams.json").read_text(encoding="utf-8"))

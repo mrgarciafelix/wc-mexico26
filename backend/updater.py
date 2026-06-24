@@ -34,6 +34,7 @@ def sync_scores_from_wikipedia(con: sqlite3.Connection) -> list[str]:
     of human-readable change summaries."""
     html = wiki.fetch(WIKI_MAIN)
     boxes = wiki.parse_matches(html)
+    dbm.set_setting(con, "last_sync_boxes", str(len(boxes)))
     changes: list[str] = []
     team_names = {r["name"] for r in con.execute("SELECT name FROM teams")}
     for b in boxes:
@@ -77,10 +78,10 @@ def sync_scores_from_wikipedia(con: sqlite3.Connection) -> list[str]:
     return changes
 
 
-def current_elo_and_form(con) -> tuple[dict, dict, dict]:
+def current_elo_and_form(con) -> tuple[dict, dict, dict, dict]:
     """Base Elo from history + WC2026 results from our DB applied on top.
-    Returns (elo, form, wc_deltas) where wc_deltas[team] = Elo gained at
-    this World Cup so far (for explainability)."""
+    Returns (elo, form, wc_deltas, style) where wc_deltas[team] = Elo gained at
+    this World Cup so far and style[team] = (attack, defense) residual."""
     state = compute_base_elo()
     pre_wc = {r["name"]: state.rating[r["name"]]
               for r in con.execute("SELECT name FROM teams")}
@@ -93,6 +94,8 @@ def current_elo_and_form(con) -> tuple[dict, dict, dict]:
               else -ELO_HOME_ADV if host == m["away_team"] else 0.0)
         old_h = state.rating[m["home_team"]]
         old_a = state.rating[m["away_team"]]
+        state.update_style(m["home_team"], m["away_team"], m["home_score"],
+                           m["away_score"], old_h + ha - old_a)
         new_h, new_a = update_pair(old_h, old_a, m["home_score"],
                                    m["away_score"], 60, ha)
         state.rating[m["home_team"]] = new_h
@@ -102,7 +105,8 @@ def current_elo_and_form(con) -> tuple[dict, dict, dict]:
     elo = {t: state.rating[t] for t in pre_wc}
     form = {t: state.form(t) for t in pre_wc}
     wc_delta = {t: elo[t] - pre_wc[t] for t in pre_wc}
-    return elo, form, wc_delta
+    style = {t: state.style(t) for t in pre_wc}
+    return elo, form, wc_delta, style
 
 
 def injuries_out(con) -> dict[str, float]:
@@ -120,12 +124,16 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
     if sync_wiki:
         try:
             changes = sync_scores_from_wikipedia(con)
+            dbm.set_setting(con, "last_sync_ts", dbm.now())
+            dbm.set_setting(con, "last_sync_ok", "1")
         except Exception as e:  # network down -> still recompute from DB
             changes = [f"wiki sync failed: {e}"]
             dbm.add_event(con, "warning", None, f"Wikipedia sync failed: {e}")
+            dbm.set_setting(con, "last_sync_ok", "0")
+            dbm.set_setting(con, "last_sync_err", str(e)[:200])
 
     teams = dbm.teams_list(con)
-    elo, form, wc_delta = current_elo_and_form(con)
+    elo, form, wc_delta, style = current_elo_and_form(con)
     try:
         club_form = playerform.team_club_form(con)
         club_form.pop("_coverage", None)
@@ -133,7 +141,7 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
         dbm.add_event(con, "warning", None, f"club-form unavailable: {e}")
         club_form = {}
     strengths = team_strengths(teams, elo, form, injuries_out(con),
-                               club_form=club_form)
+                               club_form=club_form, style=style)
     matches = dbm.matches_for_sim(con)
     n_sims = int(dbm.get_setting(con, "n_sims", "20000"))
     res = run_simulation(teams, matches, alloc(),
@@ -151,11 +159,13 @@ def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
         s = strengths[team]
         strength_rows.append((run_id, team, s["elo"], s["mv_adj"],
                               s["form_adj"], s["injury_adj"], s["manual_adj"],
-                              s["club_form_adj"], s["strength"]))
+                              s["club_form_adj"], s["style_attack"],
+                              s["style_defense"], s["strength"]))
     con.executemany("INSERT INTO probs VALUES (?,?,?,?)", prob_rows)
     con.executemany(
         "INSERT INTO strengths (run_id, team, elo, mv_adj, form_adj, injury_adj, "
-        "manual_adj, club_form_adj, strength) VALUES (?,?,?,?,?,?,?,?,?)",
+        "manual_adj, club_form_adj, style_attack, style_defense, strength) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         strength_rows)
     con.commit()
     try:

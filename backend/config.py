@@ -55,7 +55,13 @@ CONTINENTAL_FINALS = (
 
 # --- Strength blend ----------------------------------------------------------
 MV_WEIGHT = 35.0             # Elo points per z-score of log market value
-FORM_WEIGHT = 0.5            # multiplier on last-10-match Elo delta, capped
+# FORM_WEIGHT was 0.5. Zeroed 2026-06-18 after the evaluation bench
+# (scripts/evaluate.py) showed "form" (sum of last-10 Elo deltas) SIGNIFICANTLY
+# worsens out-of-sample 1X2 log-loss at every positive weight — Elo already
+# encodes recent results, so adding form double-counts momentum and injects
+# noise. Paired-bootstrap 95% CI at w=0.5 over 4,448 games: [-0.0065, -0.0018]
+# log-loss (all below zero = real harm). Kept as a tunable lever, not removed.
+FORM_WEIGHT = 0.0
 FORM_CAP = 40.0
 INJURY_ELO_PER_IMPORTANCE = 60.0   # full-importance player (1.0) out -> -60 Elo
                                    # (~0.25 goals), scaled by player importance
@@ -65,6 +71,31 @@ WC_HOST_ELO_BONUS = 80.0     # host playing in own country during the WC
 # log-loss on BOTH the 2022 WC backtest and the live 2026 games — see
 # scripts/evaluate.py. Kept modest (0.88) to avoid overfitting the small samples.
 WC_CONFIDENCE = 0.88
+# Extra diagonal inflation for group-stage WC fixtures, on top of the base
+# draw_boost. ZEROED after scripts/eval_wc.py: the 2026 group slate ran 43% draws
+# (9/21), which *looks* like a huge edge, but historical WC group matches draw
+# only 23.7% and the engine already predicts ~27.5% there — it slightly OVER-
+# states WC draws. The live spike is small-sample variance, not structure, so a
+# blanket boost overfits noise. The real, principled draw signal is situational
+# (game-3 mutual-convenience standings) and lives in urgency.py, not here. Kept
+# as a documented lever at 0; re-tune in scripts/eval_wc.py if the sample grows.
+WC_GROUP_DRAW_BOOST = 0.0
+
+# --- Style matchup (attack/defense identity beyond Elo) ----------------------
+# Elo is a single W/D/L-driven number; two teams with equal Elo can have very
+# different goal profiles (a high-variance attacker vs a low-block grinder). We
+# track each team's rolling attack residual (goals scored vs Poisson-expected)
+# and defense residual (goals conceded vs expected) over the Elo replay, then a
+# team's expected goals in a fixture are nudged by ITS attack × the OPPONENT's
+# defense — "does our style hurt them?". Validated out-of-sample on 4,134 held-out
+# 2022-26 matches (scripts/eval_style.py): the over-2.5 gain is a robust +0.006
+# log-loss across w=0.25..0.45, and at w=0.25 the 1X2 gain's paired-bootstrap 95%
+# CI excludes zero (SIG) — the same bar the form feature failed. 0.30 sits at the
+# joint peak, conservative against overfit (w>=0.55 erodes the gain).
+STYLE_WEIGHT = 0.30          # how much of the (attack+opp_defense) residual to apply
+STYLE_DECAY = 0.96           # exponential memory on each team's style residual
+STYLE_RESID_CAP = 0.7        # clip a single match's log goal-ratio (anti-blowout)
+STYLE_MULT_CAP = 0.35        # cap |log| of the final per-team goal multiplier
 
 # --- Simulation --------------------------------------------------------------
 N_SIMS = 50000

@@ -10,7 +10,7 @@ import math
 
 import numpy as np
 
-from .config import SEED
+from .config import SEED, STYLE_MULT_CAP, STYLE_WEIGHT
 
 MAX_GOALS = 10
 D_CAP = 600.0
@@ -30,6 +30,21 @@ def lambdas(d_eff: float) -> tuple[float, float]:
     p = params()
     d = max(-D_CAP, min(D_CAP, d_eff)) / 100.0
     return math.exp(p["a"] + p["b"] * d), math.exp(p["a"] - p["b"] * d)
+
+
+def style_multipliers(style_h: tuple[float, float] | None,
+                      style_a: tuple[float, float] | None) -> tuple[float, float]:
+    """Per-team goal multipliers from style residuals. A team's expected goals
+    rise with ITS attack residual and the OPPONENT's defense residual (their
+    leaky/solid identity), scaled by STYLE_WEIGHT and capped. (atk, def) come
+    from EloState.style(); None -> neutral 1.0."""
+    if not style_h or not style_a:
+        return 1.0, 1.0
+    ah, dh = style_h
+    aa, da = style_a
+    mh = max(-STYLE_MULT_CAP, min(STYLE_MULT_CAP, STYLE_WEIGHT * (ah + da)))
+    ma = max(-STYLE_MULT_CAP, min(STYLE_MULT_CAP, STYLE_WEIGHT * (aa + dh)))
+    return math.exp(mh), math.exp(ma)
 
 
 def score_matrix(lh: float, la: float, draw_boost: float | None = None) -> np.ndarray:
@@ -53,12 +68,13 @@ def score_matrix(lh: float, la: float, draw_boost: float | None = None) -> np.nd
 
 
 def outcome_probs(d_eff: float, draw_boost: float | None = None,
-                  goals_mult: float = 1.0) -> dict:
+                  goals_mult: float = 1.0,
+                  style_mult: tuple[float, float] = (1.0, 1.0)) -> dict:
     """Analytic 1X2 + common side markets for a single match.
-    goals_mult opens/closes the game (e.g. urgency → more shots/goals)."""
+    goals_mult opens/closes the game symmetrically (urgency → more shots/goals);
+    style_mult = (home, away) tilts each side's goals by the style matchup."""
     lh, la = lambdas(d_eff)
-    if goals_mult != 1.0:
-        lh, la = lh * goals_mult, la * goals_mult
+    lh, la = lh * goals_mult * style_mult[0], la * goals_mult * style_mult[1]
     m = score_matrix(lh, la, draw_boost)
     home = float(np.tril(m, -1).sum())
     away = float(np.triu(m, 1).sum())

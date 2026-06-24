@@ -24,8 +24,9 @@ from . import odds_api
 from . import predictions as predmod
 from . import props as propmod
 from . import urgency
-from .match_model import MAX_GOALS, outcome_probs, params
+from .match_model import MAX_GOALS, outcome_probs, params, style_multipliers
 from .optimizer import optimize
+from .daily_card import daily_card as build_daily_card
 
 _update_lock = threading.Lock()
 scheduler = BackgroundScheduler()
@@ -115,10 +116,16 @@ def match_forecast(m, strengths, urg=None) -> dict | None:
     d = (sh["strength"] - sa["strength"]
          + (WC_HOST_ELO_BONUS if host == m["home_team"] else 0)
          - (WC_HOST_ELO_BONUS if host == m["away_team"] else 0)) * WC_CONFIDENCE
-    gm = 1.0
+    gm, lean = 1.0, 0.0
     if urg:
-        d, gm = urgency.apply(d, urg[0], urg[1])
-    return outcome_probs(d, goals_mult=gm)
+        d, gm, lean = urgency.apply(d, urg["sig_home"], urg["sig_away"],
+                                    urg.get("gp", 1))
+    style_mult = style_multipliers(
+        (sh.get("style_attack", 0.0), sh.get("style_defense", 0.0)),
+        (sa.get("style_attack", 0.0), sa.get("style_defense", 0.0)))
+    base_db = params().get("draw_boost", 0.0)
+    return outcome_probs(d, draw_boost=base_db + lean, goals_mult=gm,
+                         style_mult=style_mult)
 
 
 def model_prob_for(con, market: str, selection: str) -> float | None:
@@ -352,7 +359,34 @@ def build_snapshot() -> dict:
                                   "teams": list(teams), "label": label})
         bankroll = float(dbm.get_setting(con, "bankroll", "200"))
         kf = float(dbm.get_setting(con, "kelly_fraction", "0.25"))
+        # honest data-age: when results were last pulled from Wikipedia and
+        # whether that pull succeeded (the static site can only be as fresh as
+        # the last CI/publish that regenerated this snapshot).
+        data_status = {
+            "last_sync_ts": dbm.get_setting(con, "last_sync_ts", "") or None,
+            "last_sync_ok": dbm.get_setting(con, "last_sync_ok", "1") == "1",
+            "last_sync_boxes": int(dbm.get_setting(con, "last_sync_boxes", "0") or 0),
+            "interval_min": int(dbm.get_setting(con, "update_interval_min", "15")),
+        }
         plan = optimize(cands, bankroll, kf)
+        # zero-input daily parlay card: uses REAL consensus odds where we have
+        # them, model-fair price elsewhere — never the illustrative sample_book
+        # odds. Squads of the next slate's teams feed the embedded prop legs.
+        slate_squads: dict[str, list[dict]] = {}
+        if upcoming:
+            slate_day = (upcoming[0].get("kickoff_utc") or "")[:10]
+            for m in upcoming:
+                if (m.get("kickoff_utc") or "")[:10] != slate_day:
+                    break
+                for tm in (m["home_team"], m["away_team"]):
+                    if tm and tm not in slate_squads:
+                        slate_squads[tm] = squad(tm)
+        card = build_daily_card(ms, db_odds, slate_squads)
+        try:
+            predmod.log_staking_plan(con, card)         # lock today's plan
+            staking = predmod.staking_record(con)       # daily-betting track record
+        except Exception:
+            staking = {"n_settled": 0, "days": []}
     finally:
         con.close()
 
@@ -362,11 +396,13 @@ def build_snapshot() -> dict:
                  "matches_total": ov["matches_total"],
                  "bankroll": bankroll, "kelly_fraction": kf,
                  "rho": params().get("rho", 0.0), "max_goals": MAX_GOALS,
-                 "odds_source": odds_source, "accuracy": accuracy},
+                 "odds_source": odds_source, "accuracy": accuracy,
+                 "data_status": data_status},
         "teams": ov["teams"], "groups": gr, "matches": ms,
         "events": ov["events"], "movers": mv,
         "markets": markets, "sample_odds": sample, "plan": plan,
-        "track_record": track_record,
+        "daily_card": card, "track_record": track_record,
+        "staking_record": staking,
     }
 
 

@@ -8,6 +8,7 @@ results count exactly once.
 from __future__ import annotations
 
 import csv
+import math
 from collections import defaultdict, deque
 from pathlib import Path
 
@@ -15,7 +16,8 @@ import httpx
 
 from .config import (CACHE, ELO_HOME_ADV, ELO_START, K_BY_TOURNAMENT,
                      K_CONTINENTAL, K_DEFAULT, CONTINENTAL_FINALS,
-                     RESULTS_CSV_URL, USER_AGENT, canonical)
+                     RESULTS_CSV_URL, STYLE_DECAY, STYLE_RESID_CAP,
+                     USER_AGENT, canonical)
 
 RESULTS_CSV = CACHE / "results.csv"
 
@@ -63,14 +65,38 @@ class EloState:
     def __init__(self):
         self.rating: dict[str, float] = defaultdict(lambda: ELO_START)
         self.history: dict[str, deque] = defaultdict(lambda: deque(maxlen=10))
+        self.attack: dict[str, float] = defaultdict(float)    # style: scoring resid
+        self.defense: dict[str, float] = defaultdict(float)   # style: conceding resid
         self.wc_stats: dict[str, dict] = defaultdict(
             lambda: {"matches": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0})
+
+    def update_style(self, home: str, away: str, hs: int, as_: int,
+                     d_eff: float) -> None:
+        """Decay each side's attack/defense residual = log(actual / Poisson-
+        expected goals), using the PRE-match rating diff d_eff. Bounded so a
+        single blow-out can't dominate a team's style profile."""
+        from .match_model import lambdas
+        lh, la = lambdas(d_eff)
+        for team, exp_g, act_g in ((home, lh, hs), (away, la, as_)):
+            r = max(-STYLE_RESID_CAP, min(STYLE_RESID_CAP,
+                                          math.log((act_g + 0.5) / (exp_g + 0.5))))
+            self.attack[team] = STYLE_DECAY * self.attack[team] + (1 - STYLE_DECAY) * r
+        for team, exp_c, act_c in ((home, la, as_), (away, lh, hs)):
+            r = max(-STYLE_RESID_CAP, min(STYLE_RESID_CAP,
+                                          math.log((act_c + 0.5) / (exp_c + 0.5))))
+            self.defense[team] = STYLE_DECAY * self.defense[team] + (1 - STYLE_DECAY) * r
+
+    def style(self, team: str) -> tuple[float, float]:
+        """(attack residual, defense residual) — + attack = scores more than Elo
+        implies; + defense = concedes more (leaky)."""
+        return self.attack[team], self.defense[team]
 
     def apply(self, home: str, away: str, hs: int, as_: int,
               tournament: str, neutral: bool):
         k = k_factor(tournament)
         ha = 0.0 if neutral else ELO_HOME_ADV
         old_h, old_a = self.rating[home], self.rating[away]
+        self.update_style(home, away, hs, as_, old_h + ha - old_a)
         new_h, new_a = update_pair(old_h, old_a, hs, as_, k, ha)
         self.rating[home], self.rating[away] = new_h, new_a
         self.history[home].append(new_h - old_h)

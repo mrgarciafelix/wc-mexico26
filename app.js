@@ -73,16 +73,13 @@ async function loadSnapshot(bust) {
 }
 
 function initState() {
-  BANKROLL = parseFloat(localStorage.getItem(LS.bank)) || S.meta.bankroll || 200;
-  KELLY = parseFloat(localStorage.getItem(LS.kelly)) || S.meta.kelly_fraction || 0.25;
+  // The bankroll/Kelly inputs were removed — the parlay card self-stakes and the
+  // Value board just uses these fixed defaults for its illustrative plan.
+  BANKROLL = S.meta.bankroll || 200;
+  KELLY = S.meta.kelly_fraction || 0.25;
   const saved = JSON.parse(localStorage.getItem(LS.odds) || "{}");
   ODDS = Object.assign({}, S.sample_odds, saved);
-  applyControls();
   initStateLabel();
-}
-function applyControls() {
-  for (const id of ["in-bankroll", "t-bankroll"]) { const el = document.getElementById(id); if (el) el.value = BANKROLL; }
-  for (const id of ["in-kelly", "t-kelly"]) { const el = document.getElementById(id); if (el) el.value = KELLY; }
 }
 const userOdds = () => JSON.parse(localStorage.getItem(LS.odds) || "{}");
 function setOdds(key, val) {
@@ -288,30 +285,34 @@ function todayCandidates(slate) {
   return S.markets.filter(m => m.match_no != null && nos.has(m.match_no) && ODDS[m.key] > 1)
     .map(m => ({...m, decimal_odds: ODDS[m.key]}));
 }
-function renderToday() {                       // zero-input DAILY CARD (S.daily_card)
+function renderToday() {                       // zero-input DAILY PARLAY CARD
   const c = S.daily_card, g = id => document.getElementById(id);
-  if (!c || !c.games || !c.games.length) {
-    g("card-games").innerHTML = `<div class="empty">No upcoming matches right now — check back before the next match day.</div>`;
-    ["card-hero","card-day","card-safe"].forEach(i => g(i).innerHTML = "");
+  const has = c && (c.day_parlay || c.safe_parlay);
+  if (!has) {
+    g("card-day").innerHTML = `<div class="empty">No upcoming matches right now — check back before the next match day.</div>`;
+    ["card-hero","card-safe","card-projection","card-record"].forEach(i => { const e=g(i); if (e) e.innerHTML = ""; });
     g("card-note").innerHTML = ""; renderAccuracy(); return;
   }
-  const s = c.summary || {};
+  const s = c.summary || {}, proj = c.projection || {};
   g("card-date").textContent = cardDate(c.slate);
-  g("card-sub").textContent = s.live_odds
-    ? "Real ~20-book odds. Bet each ticket exactly as shown — flat $10, no inputs."
-    : "Model prices (no live book line yet). Bet each ticket as shown — flat $10.";
+  g("card-sub").textContent = (s.live_odds
+    ? "Real ~20-book odds where available; props are model-priced. "
+    : "Model prices (no live book line yet). ")
+    + "Two parlays, model-staked — nothing to enter.";
   g("card-hero").innerHTML = [
-    ["Games today", c.games.length, "on the card", ""],
-    ["Per ticket", "$"+(c.stake|0), "flat — no Kelly", ""],
-    ["Value plays", s.n_value||0, (s.n_value? "beat the book ✓":"none beat the book"), s.n_value?"good":""],
-    ["Odds", s.live_odds?"LIVE":"MODEL", s.live_odds?"~20 books":"fair price", s.live_odds?"good":""],
+    ["Games today", s.n_games||0, "on the slate", ""],
+    ["Day outlay", "$"+((proj.total_stake||0)|0), "both tickets, 10–50 ea.", ""],
+    ["Finish green", proj.p_green!=null ? Math.round(proj.p_green*100)+"%" : "—",
+      "model chance", proj.p_green>=0.5?"good":""],
+    ["Value legs", s.n_value||0, (s.n_value? "beat a real line ✓":"none beat the book"), s.n_value?"good":""],
   ].map(([k,v,n,cl]) => `<div class="stat"><div class="k">${k}</div>
     <div class="v ${cl}">${v}</div><div class="note">${n}</div></div>`).join("");
-  g("card-games").innerHTML = c.games.map(cardGame).join("");
+  g("card-projection").innerHTML = projectionPanel(c);
   g("card-day").innerHTML = c.day_parlay ? cardParlay(c.day_parlay)
-    : `<div class="empty">Need at least two games for a day parlay.</div>`;
+    : `<div class="empty">Not enough legs for a day parlay today.</div>`;
   g("card-safe").innerHTML = c.safe_parlay ? cardParlay(c.safe_parlay)
-    : `<div class="empty">No strong-enough favourites today for a safe parlay.</div>`;
+    : `<div class="empty">No strong-enough favourites for a safe parlay today.</div>`;
+  renderStakingRecord();
   renderAccuracy();
   g("card-note").innerHTML = esc(s.note || "");
 }
@@ -321,32 +322,73 @@ function cardDate(iso) {
     {weekday:"long", month:"short", day:"numeric"});
 }
 function c0(n){ return (Math.round(n*100)/100).toString().replace(/\.0+$/,""); }
-function cardGame(g) {
-  const pk = g.pick, b = g.booster;
-  const vb = pk.value ? `<span class="badge val">VALUE ✓</span>` : "";
-  const ob = pk.live_odds ? `<span class="badge live">LIVE</span>` : `<span class="badge model">MODEL</span>`;
-  return `<div class="play${pk.value?" is-value":""}">
-    <div class="play-head"><span>M${g.match_no} · ${esc(g.stage)} · ${clockUTC(g.kickoff)}</span>${ob}</div>
-    <div class="play-teams">${flag(g.home)} ${esc(code(g.home))} <span class="vs">v</span> ${esc(code(g.away))} ${flag(g.away)}</div>
-    <div class="play-row">
-      <div class="play-bet"><div class="pb-main">${esc(pk.text)} ${vb}</div>
-        <div class="pb-sub">model ${pct(pk.model_p)} · pays ${pk.odds}</div></div>
-      <div class="play-stake"><span>BET</span><b>$${c0(pk.stake)}</b><span>win $${pk.to_return}</span></div>
+
+function projectionPanel(c) {
+  const p = c.projection, cc = c.come_clean;
+  if (!p) return "";
+  const grn = Math.round((p.p_green||0)*100);
+  const ccline = cc
+    ? `<div class="cc ${cc.covered?"ok":"warn"}">${cc.covered?"🟢":"🟠"} ${esc(cc.note)}</div>`
+    : "";
+  return `<div class="proj">
+    <div class="proj-grid">
+      <div><span>Expected</span><b class="${p.exp_pnl>=0?"up":"down"}">${money(p.exp_pnl)}</b></div>
+      <div><span>Worst (5%)</span><b class="down">${money(p.worst)}</b></div>
+      <div><span>Realistic</span><b class="${p.realistic>=0?"up":"down"}">${money(p.realistic)}</b></div>
+      <div><span>Best (95%)</span><b class="up">${money(p.best)}</b></div>
     </div>
-    ${b ? `<div class="play-boost"><span class="bt">PARLAY</span>
-      <span class="bl">${b.legs.map(esc).join(" <i>+</i> ")}</span>
-      <span class="bo">${pct(b.model_p)} · ~${b.fair_odds} → $${b.to_return}</span></div>` : ""}
+    <div class="proj-bar"><i style="width:${grn}%"></i></div>
+    <div class="proj-cap">${grn}% model chance the day finishes green · ${p.sims.toLocaleString()} sims</div>
+    ${ccline}
   </div>`;
 }
+
+function legTag(l) {
+  if (l.kind === "result") return l.live_odds
+    ? `<span class="lt live">LIVE</span>` : `<span class="lt model">MODEL</span>`;
+  if (l.kind === "scorer" || l.kind === "saves") return `<span class="lt prop">PROP</span>`;
+  return `<span class="lt model">MODEL</span>`;
+}
+function legRow(l) {
+  const fl = l.kind === "result" ? `${flag(l.home)} `
+    : (l.team ? `${flag(l.team)} ` : "");
+  const vv = l.value ? `<span class="lt val">VALUE</span>` : "";
+  return `<div class="bp-leg"><span>${fl}${esc(l.text)} ${legTag(l)}${vv}</span>
+    <b>${(+l.odds).toFixed(2)}</b></div>`;
+}
 function cardParlay(p) {
+  const badge = p.value ? `<span class="badge val">VALUE ✓</span>`
+    : `<span class="badge ${p.live_odds?"live":"model"}">${p.live_odds?"PART LIVE":"MODEL"}</span>`;
   return `<div class="bigparlay${p.value?" is-value":""}">
-    <div class="bp-top"><div><div class="bp-lbl">${esc(p.label)}</div>
-      <div class="bp-sub">${p.legs.length} legs · model ${pct(p.model_p)} to land</div></div>
-      <div class="bp-ret"><div class="v">$${p.to_return}</div><div class="k">$${c0(p.stake)} returns</div></div></div>
-    ${p.legs.map(l => `<div class="bp-leg"><span>${flag(l.home)} ${esc(l.text)}</span><b>${l.odds}</b></div>`).join("")}
+    <div class="bp-top"><div><div class="bp-lbl">${esc(p.label)} ${badge}</div>
+      <div class="bp-sub">${p.n_legs} legs · model ${pct(p.model_p)} to land${p.has_props?" · incl. prop":""}</div></div>
+      <div class="bp-ret"><div class="v">$${p.to_return}</div><div class="k">$${c0(p.stake)} stake →</div></div></div>
+    ${p.legs.map(legRow).join("")}
     <div class="bp-foot">Combined odds <b>${p.combined_odds}</b> · ${p.value
-      ? `<span class="up">model edge ✓</span>` : `<span class="flat">upside ticket — no model edge</span>`}</div>
+      ? `<span class="up">model edge ✓</span>` : `<span class="flat">upside ticket — favourites are −EV</span>`}</div>
   </div>`;
+}
+
+function renderStakingRecord() {
+  const el = document.getElementById("card-record"); if (!el) return;
+  const r = S.staking_record;
+  if (!r || !r.days || !r.days.length) { el.innerHTML = ""; return; }
+  const n = r.n_settled || 0;
+  const head = n
+    ? `<div class="rec-head">🧾 Betting track record <span class="hint">${r.wins}/${n} tickets · staked ${money(r.staked)} · P/L <b class="${r.pnl>=0?"up":"down"}">${money(r.pnl)}</b>${r.roi!=null?` · ${(r.roi*100).toFixed(0)}% ROI`:""}</span></div>`
+    : `<div class="rec-head">🧾 Betting track record <span class="hint">no settled tickets yet — grades after today's games</span></div>`;
+  const days = r.days.slice(0, 6).map(d => {
+    const tks = (d.tickets||[]).map(t => {
+      const ic = {won:"🟢",lost:"🔴",partial:"🟡"}[t.status] || "⚪";
+      const pl = t.pnl!=null ? ` · ${money(t.pnl)}` : (t.status==="open" ? " · open" : "");
+      return `<div class="rec-tk"><span>${ic} ${esc(t.label)}</span><span class="hint">${t.status}${pl}</span></div>`;
+    }).join("");
+    const pj = d.projection ? `proj ${money(d.projection.exp_pnl)}` : "";
+    const av = d.actual_pnl!=null ? `actual <b class="${d.actual_pnl>=0?"up":"down"}">${money(d.actual_pnl)}</b>` : "pending";
+    return `<details class="rec-day"${d.settled?"":" open"}><summary>${cardDate(d.slate_date)}
+      <span class="hint">${pj} · ${av}</span></summary>${tks}</details>`;
+  }).join("");
+  el.innerHTML = `<div class="rec">${head}${days}</div>`;
 }
 function todayMatchCard(m, pick) {
   const fc = m.forecast || {};
@@ -582,21 +624,6 @@ document.addEventListener("change", e => {
   if (e.target.classList.contains("odds-edit") || e.target.classList.contains("brow-odds")) commitOdds(e.target);
 });
 document.getElementById("singles-more").addEventListener("click", () => { showAllSingles = !showAllSingles; renderBets(); });
-function setBankroll(v) {
-  BANKROLL = Math.max(0, parseFloat(v) || 0);
-  localStorage.setItem(LS.bank, BANKROLL); applyControls(); syncSettings(); recomputeActive();
-}
-function setKelly(v) {
-  KELLY = parseFloat(v) || 0.25;
-  localStorage.setItem(LS.kelly, KELLY); applyControls(); syncSettings(); recomputeActive();
-}
-["in-bankroll", "t-bankroll"].forEach(id => document.getElementById(id)?.addEventListener("change", e => setBankroll(e.target.value)));
-["in-kelly", "t-kelly"].forEach(id => document.getElementById(id)?.addEventListener("change", e => setKelly(e.target.value)));
-async function syncSettings() {
-  if (!LIVE) return;
-  try { await fetch("/api/settings", {method:"PUT", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({bankroll: BANKROLL, kelly_fraction: KELLY})}); } catch {}
-}
 
 /* ---------------- browse / edit all odds ---------------- */
 const browseOpen = () => document.getElementById("value-browse").open;
@@ -787,18 +814,40 @@ document.getElementById("btn-refresh").addEventListener("click", async e => {
     await loadSnapshot(true);                        // bypass cache
     ODDS = Object.assign({}, S.sample_odds, userOdds());
     setMeta(); show(ACTIVE);
-    const fresh = LIVE || (S.meta && S.meta.generated !== before);
-    b.textContent = fresh ? "✓" : "✓";
-    b.title = fresh ? "Updated to the latest data" : "Already showing the latest published data";
+    const changed = LIVE || (S.meta && S.meta.generated !== before);
+    b.textContent = "✓";
+    // Honest on the static host: tapping ↻ can only re-pull the published file —
+    // it can't run the model. The snapshot only advances when CI/publish does.
+    b.title = LIVE ? "Recomputed on the live server."
+      : changed ? `Pulled a newer snapshot (${timeAgo(S.meta.generated)}).`
+      : `No newer snapshot yet — data is ${timeAgo(S.meta.generated)}. The site auto-refreshes ~every 20 min via CI.`;
   } catch { b.textContent = "!"; b.title = "Couldn't reach the data source"; }
   setTimeout(() => { b.textContent = "↻"; b.disabled = false; }, 1400);
 });
 
+function timeAgo(iso) {
+  if (!iso) return "unknown";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s/60) + "m ago";
+  if (s < 86400) return Math.round(s/3600) + "h ago";
+  return Math.round(s/86400) + "d ago";
+}
 function setMeta() {
-  const m = S.meta;
-  const when = m.run && m.run.ts ? new Date(m.run.ts).toLocaleString([], {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "—";
-  document.getElementById("sub-meta").textContent =
-    `${m.matches_played}/${m.matches_total} PLAYED · ${LIVE?"LIVE":"SNAPSHOT"} ${when}`;
+  const m = S.meta, ds = m.data_status || {};
+  // honest data age: how old the snapshot the page is showing actually is. On a
+  // static host this is the last CI/publish; on localhost it's "just now".
+  const ageSec = (Date.now() - new Date(m.generated).getTime()) / 1000;
+  const stale = !LIVE && ageSec > 3*3600;          // >3h on the static site
+  const syncBad = ds.last_sync_ok === false;
+  const when = LIVE ? "live" : timeAgo(m.generated);
+  const cls = (stale || syncBad) ? "stale" : "fresh";
+  document.getElementById("sub-meta").innerHTML =
+    `${m.matches_played}/${m.matches_total} PLAYED · DATA <span class="age ${cls}">${when}</span>`;
+  const tip = LIVE
+    ? "Live server — recomputed on every load."
+    : `Snapshot generated ${timeAgo(m.generated)}. The published site auto-refreshes ~every 20 min via CI; tap ↻ to pull the latest.`;
+  document.getElementById("sub-meta").title = tip;
 }
 
 (async function boot() {

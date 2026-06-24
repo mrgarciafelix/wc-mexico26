@@ -28,8 +28,15 @@ def team_strengths(teams: list[dict], elo: dict[str, float],
                    form: dict[str, float],
                    injury_importance_out: dict[str, float],
                    manual_adj: dict[str, float] | None = None,
-                   club_form: dict[str, float] | None = None) -> dict[str, dict]:
-    """Per team: blended strength plus the decomposition (for explainability)."""
+                   club_form: dict[str, float] | None = None,
+                   style: dict[str, tuple[float, float]] | None = None
+                   ) -> dict[str, dict]:
+    """Per team: blended strength plus the decomposition (for explainability).
+
+    style[name] = (attack_resid, defense_resid) from EloState.style(). Unlike the
+    other terms it is NOT folded into `strength` (a scalar Elo) — it's a per-team
+    goal-shape that the match engine applies as a matchup multiplier, so it rides
+    alongside as style_attack / style_defense."""
     z = mv_zscores(teams)
     out = {}
     for t in teams:
@@ -41,6 +48,7 @@ def team_strengths(teams: list[dict], elo: dict[str, float],
         inj_adj = -INJURY_ELO_PER_IMPORTANCE * injury_importance_out.get(name, 0.0)
         man_adj = (manual_adj or {}).get(name, 0.0)
         cf_adj = (club_form or {}).get(name, 0.0)      # current club xG/form
+        sa, sd = (style or {}).get(name, (0.0, 0.0))
         out[name] = {
             "elo": round(base, 1),
             "mv_adj": round(mv_adj, 1),
@@ -48,6 +56,8 @@ def team_strengths(teams: list[dict], elo: dict[str, float],
             "injury_adj": round(inj_adj, 1),
             "manual_adj": round(man_adj, 1),
             "club_form_adj": round(cf_adj, 1),
+            "style_attack": round(sa, 3),
+            "style_defense": round(sd, 3),
             "strength": round(base + mv_adj + form_adj + inj_adj + man_adj + cf_adj, 1),
         }
     return out

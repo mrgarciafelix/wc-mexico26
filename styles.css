@@ -543,3 +543,48 @@ nav#tabs button:active span { transform: scale(.9); }
 .bp-foot { padding: 11px 15px; border-top: 1px solid var(--border); background: var(--panel2);
   font-size: 11.5px; color: var(--muted); }
 .bp-foot b { color: var(--text); font-family: var(--mono); }
+
+/* per-leg tags inside a parlay ticket */
+.lt { font-size: 8.5px; font-weight: 800; letter-spacing: .5px; padding: 1px 5px;
+  border-radius: 999px; vertical-align: middle; text-transform: uppercase; margin-left: 4px; }
+.lt.live { background: rgba(88,168,255,.15); color: var(--blue); }
+.lt.model { background: var(--panel3); color: var(--faint); }
+.lt.prop { background: rgba(189,151,255,.14); color: var(--purple); }
+.lt.val { background: rgba(61,240,176,.16); color: var(--green-bright); }
+
+/* day projection panel */
+.proj { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 14px 15px; box-shadow: var(--sh-2); }
+.proj-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.proj-grid > div { background: var(--panel2); border: 1px solid var(--border);
+  border-radius: var(--r1); padding: 9px 6px; text-align: center; }
+.proj-grid span { display: block; color: var(--muted); font-size: 9.5px; letter-spacing: .4px;
+  text-transform: uppercase; }
+.proj-grid b { font-family: var(--mono); font-size: 17px; font-weight: 800; margin-top: 3px; display: block; }
+.proj-bar { height: 7px; border-radius: 999px; background: var(--panel3); overflow: hidden; margin: 12px 0 6px; }
+.proj-bar i { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--green), var(--green-bright)); }
+.proj-cap { color: var(--muted); font-size: 11px; text-align: center; }
+.cc { margin-top: 11px; padding: 9px 11px; border-radius: var(--r1); font-size: 12px; line-height: 1.45; }
+.cc.ok { background: rgba(31,206,134,.10); border: 1px solid #2a4a3a; color: var(--green-bright); }
+.cc.warn { background: rgba(255,194,61,.08); border: 1px solid #4a4226; color: var(--gold); }
+
+/* daily-betting track record */
+.rec { margin-top: 22px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 13px 15px; box-shadow: var(--sh-2); }
+.rec-head { font-size: 13px; font-weight: 800; letter-spacing: .4px; }
+.rec-head .hint { display: block; font-weight: 400; font-size: 11px; color: var(--muted);
+  margin-top: 4px; letter-spacing: 0; }
+.rec-head .hint b { font-family: var(--mono); }
+.rec-day { border-top: 1px solid var(--border); margin-top: 9px; padding-top: 9px; }
+.rec-day > summary { cursor: pointer; font-size: 12.5px; font-weight: 700; list-style: none; }
+.rec-day > summary .hint { color: var(--muted); font-weight: 400; font-size: 11px; }
+.rec-day > summary .hint b { font-family: var(--mono); }
+.rec-tk { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px;
+  padding: 5px 0 0; }
+.rec-tk .hint { color: var(--muted); font-family: var(--mono); }
+
+/* honest data-age chip in the header */
+.age { font-family: var(--mono); }
+.age.fresh { color: var(--green-bright); }
+.age.stale { color: var(--gold); }

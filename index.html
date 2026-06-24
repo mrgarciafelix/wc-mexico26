@@ -20,23 +20,25 @@
 </header>
 
 <main>
-  <!-- ============ TODAY · DAILY CARD (zero input) ============ -->
+  <!-- ============ TODAY · DAILY PARLAY CARD (zero input) ============ -->
   <section id="tab-today" class="tab active">
     <div class="card-banner">
-      <div class="cb-title">Your card for <span id="card-date">today</span></div>
-      <div class="cb-sub" id="card-sub">Bet each ticket as shown — no inputs, no decisions.</div>
+      <div class="cb-title">Your parlays for <span id="card-date">today</span></div>
+      <div class="cb-sub" id="card-sub">Two tickets, model-staked — nothing to enter, nothing to decide.</div>
     </div>
 
     <div class="summary" id="card-hero"></div>
 
-    <h2 class="sec">🎯 The plays <span class="sec-sub">one pick per game · flat $10</span></h2>
-    <div id="card-games" class="stack"></div>
+    <h2 class="sec">📈 Day projection <span class="sec-sub">model P/L if you bet both tickets</span></h2>
+    <div id="card-projection"></div>
 
-    <h2 class="sec">🎟️ Parlay of the Day <span class="sec-sub">one $10 ticket, all of today</span></h2>
+    <h2 class="sec">🎟️ Parlay of the Day <span class="sec-sub">bankers + a prop kicker · upside</span></h2>
     <div id="card-day" class="stack"></div>
 
-    <h2 class="sec">🛡️ Safe Parlay <span class="sec-sub">strongest favourites only</span></h2>
+    <h2 class="sec">🛡️ Safe Parlay <span class="sec-sub">strongest favourites · the floor</span></h2>
     <div id="card-safe" class="stack"></div>
+
+    <div id="card-record"></div>
 
     <div id="model-accuracy"></div>
 
@@ -46,19 +48,6 @@
   <!-- ============ VALUE BOARD ============ -->
   <section id="tab-bets" class="tab">
     <div class="ctrl-card">
-      <div class="ctrl">
-        <label>Bankroll
-          <span class="money"><span>$</span><input id="in-bankroll" type="number" inputmode="decimal" min="0" step="10"></span>
-        </label>
-        <label>Risk
-          <select id="in-kelly">
-            <option value="0.1">Cautious (⅒ Kelly)</option>
-            <option value="0.25">Balanced (¼ Kelly)</option>
-            <option value="0.5">Aggressive (½ Kelly)</option>
-            <option value="1">Max (full Kelly)</option>
-          </select>
-        </label>
-      </div>
       <p class="micro" id="odds-source"></p>
     </div>
 

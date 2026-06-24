@@ -1,43 +1,57 @@
+# Refresh the published snapshot: scrape latest results, re-simulate, export, push.
+# Lives in the deploy repo (synced by publish.ps1). The static GitHub Pages site
+# has no backend, so this cron is what advances the data the phone sees.
+#
+# Hardening notes:
+#  • workflow_dispatch lets you kick a refresh by hand (Actions tab → Run workflow)
+#    when the cron is throttled — GitHub slows low-activity schedules.
+#  • concurrency cancels an in-flight run so a slow scrape can't pile up.
+#  • scripts/refresh_and_export.py SKIPS the export if the new scrape reports
+#    fewer played matches than the live snapshot, so a flaky fetch never regresses
+#    the site. A good scrape still updates it.
 name: Refresh snapshot
 
-# Re-scrape results, fetch live odds, re-simulate, and redeploy the snapshot so
-# the live site stays current without anyone running publish.ps1. Runs on a
-# schedule and can be triggered manually from the Actions tab.
 on:
   schedule:
-    - cron: "*/30 * * * *"   # every 30 minutes (UTC); GitHub may delay under load
-  workflow_dispatch:
+    - cron: "*/20 * * * *"        # every 20 min (GitHub may throttle to ~hourly)
+  workflow_dispatch: {}           # manual kick from the Actions tab / phone
+
+concurrency:
+  group: refresh-snapshot
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
-concurrency:
-  group: refresh-snapshot
-  cancel-in-progress: false
-
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt
-      - name: Refresh model + odds + export snapshot
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Scrape · simulate · export
         env:
-          WC_SNAPSHOT_OUT: data/snapshot.json
-          WC_ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}   # The Odds API (odds re-fetched ~every 6h)
+          WC_SNAPSHOT_OUT: data/snapshot.json    # served at the Pages root
+          WC_ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python -m scripts.refresh_and_export
-      - name: Commit & push if anything changed
+
+      - name: Commit & push if the snapshot changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git config user.name  "wc26-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/snapshot.json data/predictions.json data/staking_plan.json
           if git diff --cached --quiet; then
-            echo "No change."
+            echo "No snapshot change."
           else
-            git commit -m "Auto-refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git commit -m "Auto-refresh snapshot $(date -u '+%Y-%m-%d %H:%M UTC')"
             git push
           fi
