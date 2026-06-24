@@ -346,7 +346,8 @@ function projectionPanel(c) {
 function legTag(l) {
   if (l.kind === "result") return l.live_odds
     ? `<span class="lt live">LIVE</span>` : `<span class="lt model">MODEL</span>`;
-  if (l.kind === "scorer" || l.kind === "saves") return `<span class="lt prop">PROP</span>`;
+  if (l.kind === "scorer" || l.kind === "saves" || l.kind === "shots")
+    return `<span class="lt prop">PROP</span>`;
   return `<span class="lt model">MODEL</span>`;
 }
 function legRow(l) {

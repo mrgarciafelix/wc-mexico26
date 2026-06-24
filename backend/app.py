@@ -277,6 +277,7 @@ def build_snapshot() -> dict:
 
         # --- player props (near window) -------------------------------------
         squad_cache: dict[str, list[dict]] = {}
+        shots_lk = propmod.shots_lookup_safe()   # real shot volume (Understat)
 
         def squad(team: str) -> list[dict]:
             if team not in squad_cache:
@@ -309,7 +310,8 @@ def build_snapshot() -> dict:
                    m["away_team"]: fc["exp_goals_away"]}
             for team, opp in ((m["home_team"], m["away_team"]),
                               (m["away_team"], m["home_team"])):
-                for pr in propmod.outfield_props(squad(team), lam[team], PROP_TOPN):
+                for pr in propmod.outfield_props(squad(team), lam[team],
+                                                 PROP_TOPN, shots_lk):
                     for sel, p in pr["props"].items():
                         add_prop(mno, pr["id"], team, teams, m.get("kickoff_utc"),
                                  m["stage"], match_txt, pr["name"], sel, p)
@@ -381,7 +383,7 @@ def build_snapshot() -> dict:
                 for tm in (m["home_team"], m["away_team"]):
                     if tm and tm not in slate_squads:
                         slate_squads[tm] = squad(tm)
-        card = build_daily_card(ms, db_odds, slate_squads)
+        card = build_daily_card(ms, db_odds, slate_squads, shots_lk)
         try:
             predmod.log_staking_plan(con, card)         # lock today's plan
             staking = predmod.staking_record(con)       # daily-betting track record

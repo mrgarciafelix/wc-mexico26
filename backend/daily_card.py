@@ -109,12 +109,26 @@ def _totals(M: np.ndarray) -> dict[str, float]:
             "over2.5": float(M[_G > 2.5].sum()), "under2.5": float(M[_G < 2.5].sum())}
 
 
-def _candidate_legs(m: dict, odds: dict, squads: dict | None):
+def _shot_leg(no, pr, side, team) -> dict:
+    """A high-volume SHOTS prop (2+ shots) — priced from real per-90 volume when
+    the player is covered, so a streaky high-volume shooter reads correctly."""
+    p = pr["props"]["shots2"]
+    name = _clean_name(pr["name"])
+    return {"key": f"m{no}:shots:{pr['id']}", "kind": "shots", "match_no": no,
+            "text": f"{name} 2+ shots", "model_p": round(p, 4),
+            "odds": round(1.0 / p, 2) if p > 0 else 0.0, "live_odds": False,
+            "value": False, "family": f"prop:{pr['id']}:shots",
+            "player": name, "team": team, "verifiable": False,
+            "src": pr.get("shots_src", "goals")}
+
+
+def _candidate_legs(m: dict, odds: dict, squads: dict | None,
+                    shots_lookup: dict | None = None):
     """All bettable legs for one fixture, grouped by kind, plus its score matrix."""
     fc = m["forecast"]
     no, home, away = m["number"], m["home_team"], m["away_team"]
     M = score_matrix(fc["exp_goals_home"], fc["exp_goals_away"])
-    out = {"result": [], "total": [], "scorer": [], "other": []}
+    out = {"result": [], "total": [], "scorer": [], "shot": [], "other": []}
     for side, p in (("home", fc["home"]), ("draw", fc["draw"]), ("away", fc["away"])):
         o, live = _odds_lookup(odds, f"match:{no}", side, p)
         out["result"].append(_result_leg(no, side, home, away, p, o, live))
@@ -128,11 +142,13 @@ def _candidate_legs(m: dict, odds: dict, squads: dict | None):
             if not sq:
                 continue
             tl = lam[side]
-            for pr in propmod.outfield_props(sq, tl, SCORER_TOPN):
+            for pr in propmod.outfield_props(sq, tl, SCORER_TOPN, shots_lookup):
                 share = pr["exp_goals"] / tl if tl > 0 else 0.0
-                if share <= 0:
-                    continue
-                out["scorer"].append(_scorer_leg(no, pr, side, share, team))
+                if share > 0:
+                    out["scorer"].append(_scorer_leg(no, pr, side, share, team))
+                sp = pr["props"].get("shots2", 0.0)
+                if 0.45 <= sp <= 0.97:        # useful band: skip near-certain / noise
+                    out["shot"].append(_shot_leg(no, pr, side, team))
             gk = propmod.gk_props(sq, lam["away" if side == "home" else "home"])
             if gk:
                 out["other"].append(_gk_leg(no, gk, team))
@@ -178,7 +194,7 @@ def _match_joint(legs: list[dict], M: np.ndarray) -> float:
     multiply in as conditionally independent (a documented approximation)."""
     N = M.shape[0]
     matrix_legs = [l for l in legs if l["kind"] in ("result", "total", "scorer")]
-    indep_legs = [l for l in legs if l["kind"] in ("sot", "saves")]
+    indep_legs = [l for l in legs if l["kind"] in ("sot", "saves", "shots")]
     if matrix_legs:
         cond = np.ones((N, N))
         for l in matrix_legs:
@@ -334,10 +350,12 @@ def _size_safe_to_cover(safe: dict, day_stake: float) -> None:
     safe["exp_profit"] = round(safe["stake"] * (safe["model_p"] * o - 1.0), 2)
 
 
-def daily_card(matches: list[dict], odds: dict, squads: dict | None = None) -> dict:
+def daily_card(matches: list[dict], odds: dict, squads: dict | None = None,
+               shots_lookup: dict | None = None) -> dict:
     """matches: the /api/matches list (with `forecast`). odds: {market|sel:
     decimal_odds} of any live consensus odds. squads: {team: [player rows]} for
-    embedded props (optional). Returns the parlay-only daily card."""
+    embedded props (optional). shots_lookup: {norm name: shots/90} so shot props
+    are priced from real volume. Returns the parlay-only daily card."""
     upcoming = [m for m in matches
                 if m.get("forecast") and m.get("home_team") and m.get("away_team")
                 and m.get("home_score") is None and m.get("kickoff_utc")]
@@ -355,21 +373,32 @@ def daily_card(matches: list[dict], odds: dict, squads: dict | None = None) -> d
     per_game: dict[int, dict] = {}
     bankers: list[dict] = []
     scorers: list[dict] = []
+    shot_legs: list[dict] = []
     for m in slate:
-        legs, M = _candidate_legs(m, odds, squads)
+        legs, M = _candidate_legs(m, odds, squads, shots_lookup)
         mats[m["number"]] = M
         per_game[m["number"]] = legs
         bankers.append(_best_result(legs))
         scorers.extend(legs["scorer"])
+        shot_legs.extend(legs["shot"])
 
     bankers.sort(key=lambda l: -l["model_p"])
     scorers.sort(key=lambda l: -l["model_p"])
+    shot_legs.sort(key=lambda l: -l["model_p"])
 
-    # --- Parlay of the Day: bankers across the slate + one prop kicker ---------
+    def _pid(leg: dict) -> str:
+        return leg["key"].rsplit(":", 1)[-1]
+
+    # --- Parlay of the Day: bankers + a scorer (upside) + a high-volume shots
+    #     prop (the anchor) — different players, priced from real shot volume -----
     if len(slate) >= 2:
-        day_legs = bankers[:DAY_MAX_LEGS - 1] + (scorers[:1] if scorers else [])
-        if not scorers:
-            day_legs = bankers[:DAY_MAX_LEGS]
+        kicker, used = [], set()
+        if scorers:
+            kicker.append(scorers[0]); used.add(_pid(scorers[0]))
+        sh = next((l for l in shot_legs if _pid(l) not in used), None)
+        if sh:
+            kicker.append(sh)
+        day_legs = bankers[:DAY_MAX_LEGS - len(kicker)] + kicker
         day_parlay = _ticket(day_legs, "Parlay of the Day", mats, "cross")
     else:                                   # one-game slate → same-game parlay
         g = per_game[slate[0]["number"]]
@@ -378,6 +407,8 @@ def daily_card(matches: list[dict], odds: dict, squads: dict | None = None) -> d
             sg.append(max(g["total"], key=lambda l: l["model_p"]))
         if g["scorer"]:
             sg.append(g["scorer"][0])
+        if g["shot"]:
+            sg.append(max(g["shot"], key=lambda l: l["model_p"]))
         day_parlay = _ticket(sg, "Parlay of the Day", mats, "same-game")
 
     _stake_ticket(day_parlay)

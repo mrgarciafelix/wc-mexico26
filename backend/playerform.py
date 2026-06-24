@@ -47,7 +47,8 @@ def fetch(season: str = SEASON) -> dict:
                 players.append({
                     "name": str(r.get("player", "")), "team": str(r.get("team", "")),
                     "min": int(r.get("minutes", 0) or 0),
-                    "xg": float(r.get("xg", 0) or 0), "xa": float(r.get("xa", 0) or 0)})
+                    "xg": float(r.get("xg", 0) or 0), "xa": float(r.get("xa", 0) or 0),
+                    "shots": int(r.get("shots", 0) or 0)})
         except Exception as e:
             print(f"playerform: {lg} failed: {e}")
     return {"fetched_at": time.time(), "season": season, "players": players}
@@ -71,6 +72,21 @@ def sync(max_age_days: float = REFRESH_DAYS) -> dict:
         except Exception as e:
             print(f"playerform fetch failed: {e}")
     return data or {"players": []}
+
+
+def shots_per90_lookup() -> dict[str, float]:
+    """{normalized player name: shots per 90} from the cached Understat feed —
+    real shot VOLUME, used to price shot props instead of deriving them from
+    goals (which understates high-volume, low-conversion shooters like Vinícius).
+    Covers top-5-league players; others fall back to the goal-derived estimate."""
+    data = _load() or {}
+    out: dict[str, float] = {}
+    for p in data.get("players", []):
+        mins = p.get("min", 0)
+        if mins < MIN_MINUTES or not p.get("shots"):
+            continue
+        out[_norm(p["name"])] = p["shots"] * 90.0 / mins
+    return out
 
 
 def team_club_form(con) -> dict[str, float]:
