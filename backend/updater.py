@@ -11,7 +11,7 @@ from . import db as dbm
 from . import playerform
 from . import predictions
 from . import wiki
-from .config import (ELO_HOME_ADV, HOST_CITY_COUNTRY, SEED, WIKI_MAIN,
+from .config import (DATA, ELO_HOME_ADV, HOST_CITY_COUNTRY, SEED, WIKI_MAIN,
                      canonical)
 from .elo import compute_base_elo, update_pair
 from .ratings import team_strengths
@@ -109,6 +109,28 @@ def current_elo_and_form(con) -> tuple[dict, dict, dict, dict]:
     return elo, form, wc_delta, style
 
 
+AVAILABILITY_FILE = DATA / "availability.json"   # committed injury/rotation overrides
+
+
+def apply_availability_overrides(con) -> None:
+    """Apply committed availability overrides ({"Team|Player": 0|1}) so an
+    injury flag survives a stateless CI rebuild from seed (where everyone is
+    available=1). The runtime toggle in the UI writes to the DB; this file is the
+    durable, version-controlled version of the same lever — no live injury feed
+    exists, so this is how 'Neymar is out' sticks on the published site."""
+    if not AVAILABILITY_FILE.exists():
+        return
+    try:
+        overrides = json.loads(AVAILABILITY_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    for key, val in overrides.items():
+        team, _, name = str(key).partition("|")
+        con.execute("UPDATE players SET available=? WHERE team=? AND name=?",
+                    (1 if val else 0, team, name))
+    con.commit()
+
+
 def injuries_out(con) -> dict[str, float]:
     out: dict[str, float] = {}
     for r in con.execute(
@@ -121,6 +143,7 @@ def injuries_out(con) -> dict[str, float]:
 def run_update(con: sqlite3.Connection, trigger: str = "scheduled",
                sync_wiki: bool = True) -> dict:
     changes = []
+    apply_availability_overrides(con)       # durable injury flags (e.g. Neymar out)
     if sync_wiki:
         try:
             changes = sync_scores_from_wikipedia(con)
