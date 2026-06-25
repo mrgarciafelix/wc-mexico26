@@ -36,7 +36,6 @@ from .match_model import MAX_GOALS, score_matrix
 STAKE_MIN = 10.0          # pesos: floor stake for the riskiest ticket
 STAKE_MAX = 50.0          # pesos: ceiling stake for the safest ticket
 SAFE_MIN_P = 0.60         # a result leg is "safe" if the model gives it >= 60%
-DAY_MAX_LEGS = 5          # cap the day parlay so it can realistically land
 SAFE_MAX_LEGS = 4         # cap the safe parlay
 SCORER_TOPN = 3           # scoring threats considered per team
 MC_SIMS = 20000           # Monte-Carlo paths for the day projection
@@ -398,7 +397,13 @@ def daily_card(matches: list[dict], odds: dict, squads: dict | None = None,
         sh = next((l for l in shot_legs if _pid(l) not in used), None)
         if sh:
             kicker.append(sh)
-        day_legs = bankers[:DAY_MAX_LEGS - len(kicker)] + kicker
+        # Parlay of the Day spans EVERY game of the day's slate — one banker per
+        # game — plus the prop kicker(s). (Previously capped to the strongest few
+        # games via DAY_MAX_LEGS; removed so no game on the card is left out.
+        # Trade-off: more legs => longer combined odds and a lower chance of
+        # landing — the stake and projection below use the true joint probability,
+        # so they adjust automatically.)
+        day_legs = bankers + kicker
         day_parlay = _ticket(day_legs, "Parlay of the Day", mats, "cross")
     else:                                   # one-game slate → same-game parlay
         g = per_game[slate[0]["number"]]
